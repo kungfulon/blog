@@ -1,0 +1,19 @@
+baseURL = 'https://nyancat0131.moe/'
+languageCode = 'en-us'
+title = 'nyancat0131'
+theme = 'm10c'
+
+[params]
+  author = 'nyancat0131'
+  description = 'Security Engineer'
+  avatar = '/avatar.png'
+
+  [[params.social]]
+    icon = "twitter"
+    name = "Twitter"
+    url = "https://twitter.com/bienpnn"
+
+  [[params.social]]
+    icon = "github"
+    name = "Github"
+    url = "https://github.com/kungfulon"
