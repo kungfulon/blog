@@ -9,6 +9,11 @@ theme = 'm10c'
   avatar = '/avatar.png'
 
   [[params.social]]
+    icon = "facebook"
+    name = "Facebook"
+    url = "https://www.facebook.com/nyancat0131"
+
+  [[params.social]]
     icon = "twitter"
     name = "Twitter"
     url = "https://twitter.com/bienpnn"
