@@ -2,6 +2,10 @@
 title: "ALLES! CTF 2021 - 🔥 Counter Strike: Squirrel Offensive"
 date: 2021-09-06T07:30:12Z
 draft: false
+tags:
+  - source-engine
+  - ctf
+  - pwn
 ---
 
 This challenge involves an old version of CS:GO VScript, which is vulnerable to [a UAF bug and a type confusion bug](https://github.com/albertodemichelis/squirrel/issues/220).

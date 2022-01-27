@@ -2,6 +2,9 @@
 title: "Source Engine Exploitation: (Un)restricted file upload strikes again"
 date: 2022-01-27T16:58:00+07:00
 draft: false
+tags:
+  - source-engine
+  - exploit
 ---
 
 ## Introduction
