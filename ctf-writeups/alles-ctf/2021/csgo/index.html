@@ -1,0 +1,183 @@
+<!doctype html><html lang=en-us>
+<head>
+<title>ALLES! CTF 2021 - 🔥 Counter Strike: Squirrel Offensive // nyancat0131</title>
+<link rel="shortcut icon" href=/favicon.ico>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.92.1">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="nyancat0131">
+<meta name=description content>
+<link rel=stylesheet href=https://nyancat0131.moe/css/main.min.4a7ec8660f9a44b08c4da97c5f2e31b1192df1d4d0322e65c0dbbc6ecb1b863f.css>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="ALLES! CTF 2021 - 🔥 Counter Strike: Squirrel Offensive">
+<meta name=twitter:description content="This challenge involves an old version of CS:GO VScript, which is vulnerable to a UAF bug and a type confusion bug.
+Resources on VScript can be found here.
+Here is the exploit script.
+UAF by resizing array in sort compare function The sort function of squirrel array is array_sort in sqbaselib.cpp, which will call _qsort:
+// v: VM, o: array object, func: compare func _qsort(v, o, 0, _array(o)->Size()-1, func); The r index passed into _qsort is fixed at the beginning, so by abusing array.">
+<meta property="og:title" content="ALLES! CTF 2021 - 🔥 Counter Strike: Squirrel Offensive">
+<meta property="og:description" content="This challenge involves an old version of CS:GO VScript, which is vulnerable to a UAF bug and a type confusion bug.
+Resources on VScript can be found here.
+Here is the exploit script.
+UAF by resizing array in sort compare function The sort function of squirrel array is array_sort in sqbaselib.cpp, which will call _qsort:
+// v: VM, o: array object, func: compare func _qsort(v, o, 0, _array(o)->Size()-1, func); The r index passed into _qsort is fixed at the beginning, so by abusing array.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://nyancat0131.moe/ctf-writeups/alles-ctf/2021/csgo/"><meta property="article:section" content="ctf-writeups">
+<meta property="article:published_time" content="2021-09-06T07:30:12+00:00">
+<meta property="article:modified_time" content="2021-09-06T07:30:12+00:00">
+</head>
+<body>
+<header class=app-header>
+<a href=https://nyancat0131.moe/><img class=app-header-avatar src=/avatar.png alt=nyancat0131></a>
+<h1>nyancat0131</h1>
+<p>Security Engineer</p>
+<div class=app-header-social>
+<a href=https://twitter.com/bienpnn target=_blank rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-twitter"><title>Twitter</title><path d="M23 3a10.9 10.9.0 01-3.14 1.53 4.48 4.48.0 00-7.86 3v1A10.66 10.66.0 013 4s-4 9 5 13a11.64 11.64.0 01-7 2c9 5 20 0 20-11.5a4.5 4.5.0 00-.08-.83A7.72 7.72.0 0023 3z"/></svg>
+</a>
+<a href=https://github.com/kungfulon target=_blank rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg>
+</a>
+</div>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>ALLES! CTF 2021 - 🔥 Counter Strike: Squirrel Offensive</h1>
+<div class=post-meta>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Sep 6, 2021
+</div>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+5 min read
+</div>
+</div>
+</header>
+<div class=post-content>
+<p>This challenge involves an old version of CS:GO VScript, which is vulnerable to <a href=https://github.com/albertodemichelis/squirrel/issues/220>a UAF bug and a type confusion bug</a>.</p>
+<p>Resources on VScript can be found <a href=https://developer.valvesoftware.com/wiki/VScript>here</a>.</p>
+<p><a href=https://gist.githubusercontent.com/kungfulon/c50323cf6ae54104e3c65b2b30804cc1/raw/c2f6cf5a5eabea14c40ef152c83c6fff1ba5e894/exp.nut>Here</a> is the exploit script.</p>
+<h2 id=uaf-by-resizing-array-in-sort-compare-function>UAF by resizing array in sort compare function</h2>
+<p>The sort function of squirrel array is <code>array_sort</code> in <code>sqbaselib.cpp</code>, which will call <code>_qsort</code>:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#75715e>// v: VM, o: array object, func: compare func
+</span><span style=color:#75715e></span>_qsort(v, o, <span style=color:#ae81ff>0</span>, _array(o)<span style=color:#f92672>-&gt;</span>Size()<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, func);
+</code></pre></div><p>The <code>r</code> index passed into <code>_qsort</code> is fixed at the beginning, so by abusing <code>array.resize</code> in compare function, we can retrieve dangling reference to freed objects through compare function parameters.</p>
+<p>By freeing a string then overlap it with an array, the <code>_len</code> field of the freed <code>SQString</code> object will be overwritten by the <code>_sharedstate</code> field of the newly created <code>SQArray</code>. It&rsquo;s a pointer so the value will be very large, and we can use the dangling string to do arbitrary reading over a large heap space after it.</p>
+<h2 id=type-confusion-in-regexp-functions>Type confusion in regexp functions</h2>
+<p><code>_regexp_*</code> functions in <code>sqstdstring.cpp</code> retrieve <code>SQRex</code> object from the current object using <code>SETUP_REX</code> macro:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#75715e>#define SETUP_REX(v) \
+</span><span style=color:#75715e>    SQRex *self = NULL; \
+</span><span style=color:#75715e>    sq_getinstanceup(v,1,(SQUserPointer *)&amp;self,0); 
+</span></code></pre></div><p>The <code>typetag</code> parameter is <code>0</code>, means that it will not check for type mismatch. So we can call <code>_regexp_*</code> functions using any <code>instance</code> object (examples: self-defined classes, external library classes like CS:GO script classes).</p>
+<h2 id=addresses-leaking>Addresses leaking</h2>
+<p>As we have a long string by using UAF bug above, we can just spray a lot of <code>CScriptKeyValues</code> and find one of them using last 2 bytes of <code>SQInstance::vtable</code> as they will not be affected by Windows ASLR, then use confusion to watch for changes to <code>_userpointer</code> field. But there are other <code>instance</code> objects too, and we have no way to be sure that it&rsquo;s a <code>CScriptKeyValues</code> object.</p>
+<p>Fortunately, the <code>tostring</code> method will return the type name and the address in memory of any object. For number and string it will just return the value. But we overlapped the freed string with an array, so we can get address of it by calling <code>tostring</code> on the array. We can keep allocate new <code>CScriptKeyValues</code> object until we get one that lies after our long string and in the range that we can read its data. I won&rsquo;t go into detail of Source Engine heap in this writeup, but most of the time we will get a satisfied object without triggering Squirrel timeout watchdog.</p>
+<p>By reading the <code>CScriptKeyValues</code> object, we can get these values:</p>
+<ul>
+<li>Pointer to <code>SQInstance::vtable</code>, which can be used to calculate <code>vscript.dll</code> base address for ROP gadgets</li>
+<li>Pointer to <code>_userpointer</code> of that object</li>
+</ul>
+<h2 id=path-of-exploitation>Path of exploitation</h2>
+<p>My approach is to use a CS:GO script class, <code>CScriptKeyValues</code>. Squirrel will panic if you attempt to modify the prototype after 1 instance of a class has been created. Since in map loading, there&rsquo;re no instance of this class would be created, we can modify its prototype:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-js data-lang=js><span style=color:#a6e22e>CScriptKeyValues</span>.<span style=color:#a6e22e>confuse</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>regexp</span>.<span style=color:#a6e22e>constructor</span>;
+<span style=color:#a6e22e>CScriptKeyValues</span>.<span style=color:#a6e22e>confuse2</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>regexp</span>.<span style=color:#a6e22e>search</span>;
+</code></pre></div><p>When we call any method of a CS:GO script class, <code>CSquirrelVM::TranslateCall</code> in <code>vsquirrel.cpp</code> will be called. It will access <code>_userpointer</code> field of the object to get binding information:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp>pContext <span style=color:#f92672>=</span> (InstanceContext_t <span style=color:#f92672>*</span>)sa.GetInstanceUp(<span style=color:#ae81ff>1</span>,<span style=color:#ae81ff>0</span>); <span style=color:#75715e>// _userpointer
+</span><span style=color:#75715e></span>
+<span style=color:#66d9ef>if</span> ( <span style=color:#f92672>!</span>pContext )
+{
+    sq_throwerror( hVM, <span style=color:#e6db74>&#34;Accessed null instance&#34;</span> );
+    <span style=color:#66d9ef>return</span> SQ_ERROR;
+}
+
+pObject <span style=color:#f92672>=</span> pContext<span style=color:#f92672>-&gt;</span>pInstance;
+
+<span style=color:#66d9ef>if</span> ( <span style=color:#f92672>!</span>pObject )
+{
+    sq_throwerror( hVM, <span style=color:#e6db74>&#34;Accessed null instance&#34;</span> );
+    <span style=color:#66d9ef>return</span> SQ_ERROR;
+}
+
+<span style=color:#66d9ef>if</span> ( pContext<span style=color:#f92672>-&gt;</span>pClassDesc<span style=color:#f92672>-&gt;</span>pHelper )
+{
+    pObject <span style=color:#f92672>=</span> pContext<span style=color:#f92672>-&gt;</span>pClassDesc<span style=color:#f92672>-&gt;</span>pHelper<span style=color:#f92672>-&gt;</span>GetProxied( pObject );
+}
+</code></pre></div><p><code>_regexp_constructor</code> will create a new <code>SQRex</code> class and store it in <code>_userpointer</code> field. That means we can control <code>pContext</code>. Below is <code>InstanceContext_t</code> struct:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>InstanceContext_t</span>
+{
+    <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>pInstance;
+    ScriptClassDesc_t <span style=color:#f92672>*</span>pClassDesc;
+    SQObjectPtr name;
+};
+</code></pre></div><p>Below is <code>SQRex</code> struct:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>SQRex</span>{
+    <span style=color:#66d9ef>const</span> SQChar <span style=color:#f92672>*</span>_eol;
+    <span style=color:#66d9ef>const</span> SQChar <span style=color:#f92672>*</span>_bol;
+    <span style=color:#66d9ef>const</span> SQChar <span style=color:#f92672>*</span>_p;
+    SQInteger _first;
+    SQInteger _op;
+    SQRexNode <span style=color:#f92672>*</span>_nodes;
+    SQInteger _nallocated;
+    SQInteger _nsize;
+    SQInteger _nsubexpr;
+    SQRexMatch <span style=color:#f92672>*</span>_matches;
+    SQInteger _currsubexp;
+    <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>_jmpbuf;
+    <span style=color:#66d9ef>const</span> SQChar <span style=color:#f92672>**</span>_error;
+};
+</code></pre></div><p><code>pClassDesc</code> field overlaps with <code>_bol</code> field. When we call <code>_regexp_search(str)</code>, <code>_bol</code> field will be set to the beginning of <code>str</code>. So we can craft a fake <code>ScriptClassDesc_t</code> object using a string. Below is <code>ScriptClassDesc_t</code> struct:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>ScriptClassDesc_t</span>
+{
+    <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>                        m_pszScriptName;
+    <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>                        m_pszClassname;
+    <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>                        m_pszDescription;
+    ScriptClassDesc_t <span style=color:#f92672>*</span>                    m_pBaseDesc;
+    CUtlVector<span style=color:#f92672>&lt;</span>ScriptFunctionBinding_t<span style=color:#f92672>&gt;</span> m_FunctionBindings;
+
+    <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>(<span style=color:#f92672>*</span>m_pfnConstruct)();
+    <span style=color:#66d9ef>void</span> (<span style=color:#f92672>*</span>m_pfnDestruct)( <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>);
+    IScriptInstanceHelper <span style=color:#f92672>*</span>                pHelper; <span style=color:#75715e>// offset 0x2C
+</span><span style=color:#75715e></span>
+    ScriptClassDesc_t <span style=color:#f92672>*</span>                    m_pNextDesc;
+};
+</code></pre></div><p>Below is <code>IScriptInstanceHelper</code> interface:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>IScriptInstanceHelper</span>
+{
+<span style=color:#66d9ef>public</span><span style=color:#f92672>:</span>
+    <span style=color:#66d9ef>virtual</span> <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>GetProxied( <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>p );
+    <span style=color:#66d9ef>virtual</span> <span style=color:#66d9ef>bool</span> <span style=color:#a6e22e>ToString</span>( <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>p, <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>pBuf, <span style=color:#66d9ef>int</span> bufSize );
+    <span style=color:#66d9ef>virtual</span> <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>BindOnRead</span>( HSCRIPT hInstance, <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>pOld, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>pszId );
+};
+</code></pre></div><p>We can craft a fake <code>IScriptInstanceHelper</code> object to control the virtual method table.</p>
+<p>Fortunately, Squirrel string is not null-terminated, so we don&rsquo;t have to worry about null bytes.</p>
+<p>In conclusion, the fake object will look like this:</p>
+<table>
+<thead>
+<tr>
+<th>Offset</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0x0</td>
+<td>pivot gadget</td>
+</tr>
+<tr>
+<td>&mldr;</td>
+<td>padding</td>
+</tr>
+<tr>
+<td>0x2C</td>
+<td><code>_userpointer + 0x4</code> (<code>_bol</code>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id=conclusion>Conclusion</h2>
+<p>Thanks ALLES! team for organizing a great CTF with awesome challenges, and allowed late submission of 🔥 challenges.</p>
+<p>Source Engine is a mature engine with a lot of functions, and use a lot of unsafe memory code. With the fact that any people can host dedicated servers, it&rsquo;s a huge attack surface. It&rsquo;s sad that Valve never bothers fixing security bugs in the engine quickly. I really hoped that they will pick up the pace after secret club&rsquo;s callout, but seems like they will never do that.</p>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+</body>
+</html>
