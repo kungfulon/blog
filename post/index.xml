@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>pwn on nyancat0131</title><link>https://nyancat0131.moe/tags/pwn/</link><description>Recent content in pwn on nyancat0131</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 06 Jul 2023 00:00:01 +0000</lastBuildDate><atom:link href="https://nyancat0131.moe/tags/pwn/index.xml" rel="self" type="application/rss+xml"/><item><title>UIUCTF 2023 Writeups</title><link>https://nyancat0131.moe/post/ctf-writeups/uiu-ctf/2023/writeup/</link><pubDate>Thu, 06 Jul 2023 00:00:01 +0000</pubDate><guid>https://nyancat0131.moe/post/ctf-writeups/uiu-ctf/2023/writeup/</guid><description>&lt;p>At UIUCTF 2023, I played with &lt;a class="link" href="https://twitter.com/ProjectSEKAIctf" target="_blank" rel="noopener"
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on nyancat0131</title><link>https://nyancat0131.moe/post/</link><description>Recent content in Posts on nyancat0131</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 06 Jul 2023 00:00:01 +0000</lastBuildDate><atom:link href="https://nyancat0131.moe/post/index.xml" rel="self" type="application/rss+xml"/><item><title>UIUCTF 2023 Writeups</title><link>https://nyancat0131.moe/post/ctf-writeups/uiu-ctf/2023/writeup/</link><pubDate>Thu, 06 Jul 2023 00:00:01 +0000</pubDate><guid>https://nyancat0131.moe/post/ctf-writeups/uiu-ctf/2023/writeup/</guid><description>&lt;p>At UIUCTF 2023, I played with &lt;a class="link" href="https://twitter.com/ProjectSEKAIctf" target="_blank" rel="noopener"
 >Project Sekai CTF team&lt;/a>. We achieved 3rd place overall.
 Below is my writeup for some pwn challenges in the CTF.&lt;/p>
 &lt;h2 id="zapping-a-setuid-1">Zapping a Setuid 1&lt;/h2>
@@ -532,7 +532,247 @@ According to the documentation, we can make the kernel execute &lt;code>/sbin/re
 request_key: Required key not available
 uiuctf-2023:/home/user# cat /tmp/flag
 uiuctf{need_more_isolations_for_root_5a4bb464}
-&lt;/code>&lt;/pre></description></item><item><title>ALLES! CTF 2021 - 🔥 Counter Strike: Squirrel Offensive</title><link>https://nyancat0131.moe/post/ctf-writeups/alles-ctf/2021/csgo/</link><pubDate>Mon, 06 Sep 2021 07:30:12 +0000</pubDate><guid>https://nyancat0131.moe/post/ctf-writeups/alles-ctf/2021/csgo/</guid><description>&lt;p>This challenge involves an old version of CS:GO VScript, which is vulnerable to &lt;a class="link" href="https://github.com/albertodemichelis/squirrel/issues/220" target="_blank" rel="noopener"
+&lt;/code>&lt;/pre></description></item><item><title>Source Engine Exploitation: (Un)restricted file upload strikes again</title><link>https://nyancat0131.moe/post/source-engine/vpk-upload/</link><pubDate>Thu, 27 Jan 2022 16:58:00 +0700</pubDate><guid>https://nyancat0131.moe/post/source-engine/vpk-upload/</guid><description>&lt;h2 id="introduction">Introduction&lt;/h2>
+&lt;p>This post will cover the exploitation chain I used to attack Source 1 Dedicated Servers. I have verified the exploit against these games:&lt;/p>
+&lt;ul>
+&lt;li>Left 4 Dead&lt;/li>
+&lt;li>Left 4 Dead 2&lt;/li>
+&lt;li>Counter-Strike: Global Offensive&lt;/li>
+&lt;/ul>
+&lt;h2 id="source-engine-file-system">Source Engine file system&lt;/h2>
+&lt;p>Source Engine allows games to &amp;ldquo;mount&amp;rdquo; multiple directories as the file search path. For example, we have &lt;code>a&lt;/code> and &lt;code>b&lt;/code> directories. When we mount those directories to the file system, the game will access both directories under the same virtual root (like virtually merging these directories). If there are files with the same relative path in both folders, whichever is mounted first will have greater priority.&lt;/p>
+&lt;p>Initially, Valve used &lt;a class="link" href="https://developer.valvesoftware.com/wiki/GCF" target="_blank" rel="noopener"
+>GCF file format&lt;/a> to store game assets. It suffers from poor performance, probably &lt;a class="link" href="https://web.archive.org/web/20170915143435/http://nemesis.thewavelength.net/index.php?c=216" target="_blank" rel="noopener"
+>due to fragmentation&lt;/a>. With the release of Source Engine 2013, &lt;a class="link" href="https://developer.valvesoftware.com/wiki/VPK_File_Format" target="_blank" rel="noopener"
+>VPK file format&lt;/a> was introduced to replace the old GCF file format.&lt;/p>
+&lt;p>Directories and VPK files are mounted by putting them into the &lt;code>gameinfo.txt&lt;/code> file. More information on it can be found &lt;a class="link" href="https://developer.valvesoftware.com/wiki/Gameinfo.txt" target="_blank" rel="noopener"
+>here&lt;/a>. As in the documentation, VPK files have to be explicitly mounted. But that changed in the L4D branch: now, when a directory is mounted, the engine will scan for &lt;code>pakXX.vpk&lt;/code> files, with &lt;code>XX&lt;/code> being a two-digit number from &lt;code>01&lt;/code> to &lt;code>98&lt;/code>, then mount them. The logic can be seen in &lt;a class="link" href="https://github.com/perilouswithadollarsign/cstrike15_src/blob/master/filesystem/basefilesystem.cpp#L2671" target="_blank" rel="noopener"
+>&lt;code>CBaseFileSystem::AddSearchPath&lt;/code> function&lt;/a>:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">void&lt;/span> CBaseFileSystem&lt;span style="color:#f92672">::&lt;/span>AddSearchPath( &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span>pPath, &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span>pathID, SearchPathAdd_t addType )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#75715e">#ifdef SUPPORT_VPK
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// scan for vpk&amp;#39;s
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">for&lt;/span>( &lt;span style="color:#66d9ef">int&lt;/span> i &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#ae81ff">1&lt;/span> ; i &lt;span style="color:#f92672">&amp;lt;&lt;/span> &lt;span style="color:#ae81ff">99&lt;/span>; i&lt;span style="color:#f92672">++&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">char&lt;/span> newVPK[MAX_PATH];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sprintf( newVPK, &lt;span style="color:#e6db74">&amp;#34;%s/pak%02d_dir.vpk&amp;#34;&lt;/span>, pPath, i );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// we will fopen to bypass pathing, etc
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> FILE &lt;span style="color:#f92672">*&lt;/span>pstdiofile &lt;span style="color:#f92672">=&lt;/span> fopen( newVPK, &lt;span style="color:#e6db74">&amp;#34;rb&amp;#34;&lt;/span> );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ( pstdiofile )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fclose( pstdiofile );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sprintf( newVPK, &lt;span style="color:#e6db74">&amp;#34;%s/pak%02d.vpk&amp;#34;&lt;/span>, pPath, i );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> AddVPKFile( newVPK );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">break&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#endif
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// ...
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>If users find or open a file with a relative path, the engine will always search in VPK files first. In &lt;a class="link" href="https://github.com/perilouswithadollarsign/cstrike15_src/blob/master/filesystem/basefilesystem.cpp#L4136" target="_blank" rel="noopener"
+>&lt;code>CBaseFileSystem::FindFile&lt;/code> function&lt;/a>:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>FileHandle_t CBaseFileSystem&lt;span style="color:#f92672">::&lt;/span>FindFile(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> CSearchPath &lt;span style="color:#f92672">*&lt;/span>path,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span>pFileName,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span>pOptions,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">unsigned&lt;/span> flags,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">**&lt;/span>ppszResolvedFilename,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">bool&lt;/span> bTrackCRCs )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> VPROF( &lt;span style="color:#e6db74">&amp;#34;CBaseFileSystem::FindFile&amp;#34;&lt;/span> );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">char&lt;/span> tempSymlinkBuffer[MAX_PATH];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> pFileName &lt;span style="color:#f92672">=&lt;/span> V_FormatFilenameForSymlinking( tempSymlinkBuffer, pFileName );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> CFileOpenInfo &lt;span style="color:#a6e22e">openInfo&lt;/span>( &lt;span style="color:#66d9ef">this&lt;/span>, pFileName, path, pOptions, flags, ppszResolvedFilename, bTrackCRCs );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">bool&lt;/span> bIsAbsolutePath &lt;span style="color:#f92672">=&lt;/span> V_IsAbsolutePath( pFileName );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ( bIsAbsolutePath )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#ifdef SUPPORT_VPK
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">if&lt;/span> ( m_VPKFiles.Count() &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> ( &lt;span style="color:#f92672">!&lt;/span> V_stristr( pFileName, &lt;span style="color:#e6db74">&amp;#34;.vpk&amp;#34;&lt;/span> ) ) )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// FileSystemWarning( FILESYSTEM_WARNING, &amp;#34;***VPK: FindFile Attempting to use full path with VPK file!\n\tFile: %s\n&amp;#34;, pFileName );
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#endif
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> openInfo.SetAbsolutePath( &lt;span style="color:#e6db74">&amp;#34;%s&amp;#34;&lt;/span>, pFileName );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// Check if it&amp;#39;s of the form C:/a/b/c/blah.zip/materials/blah.vtf
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">if&lt;/span> ( HandleOpenFromZipFile( openInfo ) )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> (FileHandle_t)openInfo.m_pFileHandle;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// check vpk file
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#75715e">#ifdef SUPPORT_VPK
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">for&lt;/span>( &lt;span style="color:#66d9ef">int&lt;/span> i &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span> ; i &lt;span style="color:#f92672">&amp;lt;&lt;/span> m_VPKFiles.Count(); i&lt;span style="color:#f92672">++&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> CPackedStoreFileHandle fHandle &lt;span style="color:#f92672">=&lt;/span> m_VPKFiles[i]&lt;span style="color:#f92672">-&amp;gt;&lt;/span>OpenFile( pFileName );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ( fHandle )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> openInfo.m_pFileHandle &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> CFileHandle(&lt;span style="color:#66d9ef">this&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> openInfo.m_pFileHandle&lt;span style="color:#f92672">-&amp;gt;&lt;/span>m_VPKHandle &lt;span style="color:#f92672">=&lt;/span> fHandle;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> openInfo.m_pFileHandle&lt;span style="color:#f92672">-&amp;gt;&lt;/span>m_type &lt;span style="color:#f92672">=&lt;/span> FT_NORMAL;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> openInfo.m_pFileHandle&lt;span style="color:#f92672">-&amp;gt;&lt;/span>m_nLength &lt;span style="color:#f92672">=&lt;/span> fHandle.m_nFileSize;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> openInfo.SetResolvedFilename( openInfo.m_AbsolutePath );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// Remember what was returned by the Steam filesystem and track the CRC.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> openInfo.m_bLoadedFromSteamCache &lt;span style="color:#f92672">=&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> openInfo.m_bSteamCacheOnly &lt;span style="color:#f92672">=&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> openInfo.m_pVPKFile &lt;span style="color:#f92672">=&lt;/span> m_VPKFiles[i];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> openInfo.HandleFileCRCTracking( openInfo.m_pFileName, false );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> ( FileHandle_t ) openInfo.m_pFileHandle;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#endif
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// Caller provided a relative path
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">if&lt;/span> ( path&lt;span style="color:#f92672">-&amp;gt;&lt;/span>GetPackFile() )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> HandleOpenFromPackFile( path&lt;span style="color:#f92672">-&amp;gt;&lt;/span>GetPackFile(), openInfo );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> (FileHandle_t)openInfo.m_pFileHandle;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> openInfo.SetAbsolutePath( &lt;span style="color:#e6db74">&amp;#34;%s%s&amp;#34;&lt;/span>, path&lt;span style="color:#f92672">-&amp;gt;&lt;/span>GetPathString(), pFileName );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// now have an absolute name
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> HandleOpenRegularFile( openInfo, bIsAbsolutePath );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> (FileHandle_t)openInfo.m_pFileHandle;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="unrestricted-file-upload">(Un)restricted file upload&lt;/h2>
+&lt;p>Supports for file upload/download from both client and server has been supported since GoldSrc (Half-Life 1 engine). Community server owners mainly use it to serve custom content to players. In the beginning, people can freely &lt;a class="link" href="http://aluigi.altervista.org/adv/sourceupfile-adv.txt" target="_blank" rel="noopener"
+>upload any file and use path traversal&lt;/a>. Since then, Valve has implemented more and more restrictions to the file upload feature: blocking &lt;code>..&lt;/code> path traversal, blocking absolute paths, blocking &amp;amp; allowing file extensions, &amp;hellip; but it was still being exploited now and then with either bypassing the filters or abusing the engine&amp;rsquo;s logic. Furthermore, there are at least two versions of the filters, one for the Source 2013 branch and one for the L4D/L4D2/CS:GO branch. I don&amp;rsquo;t know why Valve used different logic for the same feature.&lt;/p>
+&lt;p>Server owners can prevent clients from uploading files to the server by setting &lt;code>sv_allowupload&lt;/code> to &lt;code>0&lt;/code>, at the cost of clients wouldn&amp;rsquo;t be able to use custom sprays. CS:GO is a particular case: it doesn&amp;rsquo;t allow players to use custom sprays and instead sells them as cosmetic items. This led to Valve eventually setting &lt;code>sv_allowupload&lt;/code> to &lt;code>0&lt;/code> by default in &lt;a class="link" href="https://blog.counter-strike.net/index.php/2018/02/20051/" target="_blank" rel="noopener"
+>an update on 2018/08/02&lt;/a>.&lt;/p>
+&lt;p>In Source 2013 games, there is a separated directory to handle uploaded contents in &lt;code>gameinfo.txt&lt;/code>. For example, in TF2:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-js" data-lang="js">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// Random files downloaded from gameservers go into a seperate directory, so
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// that it&amp;#39;s easy to keep those files segregated from the official game files
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// or customizations intentially installed by the user.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">//
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// This directory is searched LAST. If you visit a server and download
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// a custom model, etc, we don&amp;#39;t want that file to override the default
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// game file indefinitely (after you have left the server). Servers CAN have
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// custom content that overrides the default game files, it just needs to be
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// packed up in the .bsp file so that it will be mounted as a map search pack.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// The map search pack is mounted at the top of the search path list,
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// but only while you are connected that server and on that map.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">game&lt;/span>&lt;span style="color:#f92672">+&lt;/span>&lt;span style="color:#a6e22e">download&lt;/span> &lt;span style="color:#a6e22e">tf&lt;/span>&lt;span style="color:#f92672">/&lt;/span>&lt;span style="color:#a6e22e">download&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>But from L4D onwards, only the main game path (and DLCs) are mounted. For example, in CS:GO:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-js" data-lang="js">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// Search paths are relative to the base directory, which is where hl2.exe is found.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">//
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// |gameinfo_path| points at the directory where gameinfo.txt is.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// We always want to mount that directory relative to gameinfo.txt, so
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// people can mount stuff in c:\mymod, and the main game resources are in
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">// someplace like c:\program files\valve\steam\steamapps\&amp;lt;username&amp;gt;\half-life 2.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">//
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">SearchPaths&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Game&lt;/span> &lt;span style="color:#f92672">|&lt;/span>&lt;span style="color:#a6e22e">gameinfo_path&lt;/span>&lt;span style="color:#f92672">|&lt;/span>.
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Game&lt;/span> &lt;span style="color:#a6e22e">csgo&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>That means the default directory for uploaded contents will be the main game path.&lt;/p>
+&lt;p>When the engine receives a file upload request, it will check the file path using &lt;a class="link" href="https://github.com/perilouswithadollarsign/cstrike15_src/blob/master/engine/net_chan.cpp#L3585" target="_blank" rel="noopener"
+>&lt;code>CNetChan::IsValidFileForTransfer&lt;/code> function&lt;/a>:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">bool&lt;/span> CNetChan&lt;span style="color:#f92672">::&lt;/span>IsValidFileForTransfer( &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span>pszFilename )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ( &lt;span style="color:#f92672">!&lt;/span>pszFilename &lt;span style="color:#f92672">||&lt;/span> &lt;span style="color:#f92672">!&lt;/span>pszFilename[&lt;span style="color:#ae81ff">0&lt;/span>] )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// No absolute paths or weaseling up the tree with &amp;#34;..&amp;#34; allowed.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">if&lt;/span> ( &lt;span style="color:#f92672">!&lt;/span>COM_IsValidPath( pszFilename ) &lt;span style="color:#f92672">||&lt;/span> V_IsAbsolutePath( pszFilename ) )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">char&lt;/span> szTemp[MAX_PATH];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">int&lt;/span> l &lt;span style="color:#f92672">=&lt;/span> V_strlen( pszFilename );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ( l &lt;span style="color:#f92672">&amp;gt;=&lt;/span> &lt;span style="color:#66d9ef">sizeof&lt;/span>(szTemp) )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> V_strcpy_safe( szTemp, pszFilename );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> V_FixSlashes( szTemp, &lt;span style="color:#e6db74">&amp;#39;/&amp;#39;&lt;/span> );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ( szTemp[l&lt;span style="color:#f92672">-&lt;/span>&lt;span style="color:#ae81ff">1&lt;/span>] &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#39;/&amp;#39;&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> (
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;lua/&amp;#34;&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">||&lt;/span> V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;gamemodes/&amp;#34;&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">||&lt;/span> V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;scripts/&amp;#34;&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">||&lt;/span> V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;addons/&amp;#34;&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">||&lt;/span> V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;cfg/&amp;#34;&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">||&lt;/span> V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;~/&amp;#34;&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">||&lt;/span> V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;gamemodes.txt&amp;#34;&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// Allow only bsp and nav file transfers to not overwrite any assets in maps directory
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">if&lt;/span> ( V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;maps/&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;.bsp&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;.ain&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>V_stristr( pszFilename, &lt;span style="color:#e6db74">&amp;#34;.nav&amp;#34;&lt;/span> ) )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span>extension &lt;span style="color:#f92672">=&lt;/span> V_strrchr( pszFilename, &lt;span style="color:#e6db74">&amp;#39;.&amp;#39;&lt;/span> );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ( &lt;span style="color:#f92672">!&lt;/span>extension )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">int&lt;/span> baseLen &lt;span style="color:#f92672">=&lt;/span> V_strlen( extension );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ( baseLen &lt;span style="color:#f92672">&amp;gt;&lt;/span> &lt;span style="color:#ae81ff">4&lt;/span> &lt;span style="color:#f92672">||&lt;/span> baseLen &lt;span style="color:#f92672">&amp;lt;&lt;/span> &lt;span style="color:#ae81ff">3&lt;/span> )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// are there any spaces in the extension? (windows exploit)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#66d9ef">char&lt;/span> &lt;span style="color:#f92672">*&lt;/span>pChar &lt;span style="color:#f92672">=&lt;/span> extension;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">while&lt;/span> ( &lt;span style="color:#f92672">*&lt;/span>pChar )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ( V_isspace( &lt;span style="color:#f92672">*&lt;/span>pChar ) )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">++&lt;/span>pChar;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ( &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.cfg&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.lst&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.lmp&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.exe&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.vbs&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.com&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.bat&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.dll&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.ini&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.log&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.lua&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.nut&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.vdf&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.smx&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.gcf&amp;#34;&lt;/span> ) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">!&lt;/span>Q_strcasecmp( extension, &lt;span style="color:#e6db74">&amp;#34;.sys&amp;#34;&lt;/span> ) )
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> false;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> true;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>We can see that the &lt;code>.vpk&lt;/code> extension is not blocked. Along with the fact that the engine will load &lt;code>pakXX.vpk&lt;/code> when mounting the filesystem, we can upload &lt;code>pak02.vpk&lt;/code> to the server, and it will be mounted when the server is restarted. This is a massive win since we can put any file inside the pack file, effectively bypassing the file extension blocklist. A crash bug can be used to force the server to restart since most servers will be using an auto-restart script.&lt;/p>
+&lt;h2 id="code-execution">Code execution&lt;/h2>
+&lt;p>Now that we have unrestricted file upload, there are many ways to achieve code execution. One can chain this with a memory corruption bug (like loading a malicious model or metadata) since the engine code is unsafe. But there is an easier way: loading an external library as a &lt;a class="link" href="https://developer.valvesoftware.com/wiki/Server_plugins" target="_blank" rel="noopener"
+>plugin for the engine&lt;/a>. Looking at the blocklist, we can easily see that the&lt;code>.so&lt;/code> extension is not blocked, so we can upload a library to the server, then use the &lt;code>plugin_load&lt;/code> console command to load the library. We can put the command into &lt;code>cfg/autoexec.cfg&lt;/code>, then put the file into &lt;code>pak02.vpk&lt;/code> to automatically run it when the server restart. Note that the library must be uploaded separately since the engine does not support loading a library from a VPK file.&lt;/p>
+&lt;h2 id="conclusion">Conclusion&lt;/h2>
+&lt;p>Usually, when attacking Source Engine, people tend to find a memory corruption bug since it&amp;rsquo;s written in C/C++ and uses multiple file formats (&lt;code>grep -i assert&lt;/code> FTW). But usually, an information disclosure bug is necessary, and it is much harder to find one. The engine is complex, and there are many mechanisms hackers can abuse to their advantage. There are still more issues that I want to talk about. Unfortunately, Valve are slow in resolving the reports. I hope you enjoy this, and stay tuned for the next article.&lt;/p>
+&lt;h2 id="timeline">Timeline&lt;/h2>
+&lt;ul>
+&lt;li>2021/04/24: Reported to Valve&amp;rsquo;s HackerOne program&lt;/li>
+&lt;li>2021/04/29: Fixed in Counter-Strike: Global Offensive&lt;/li>
+&lt;li>2021/05/04: Bounty awarded ($7500)&lt;/li>
+&lt;li>2021/??/??: Fixed in Left 4 Dead &amp;amp; Left 4 Dead 2&lt;/li>
+&lt;li>2022/01/26: Report marked as resolved&lt;/li>
+&lt;/ul></description></item><item><title>ALLES! CTF 2021 - 🔥 Counter Strike: Squirrel Offensive</title><link>https://nyancat0131.moe/post/ctf-writeups/alles-ctf/2021/csgo/</link><pubDate>Mon, 06 Sep 2021 07:30:12 +0000</pubDate><guid>https://nyancat0131.moe/post/ctf-writeups/alles-ctf/2021/csgo/</guid><description>&lt;p>This challenge involves an old version of CS:GO VScript, which is vulnerable to &lt;a class="link" href="https://github.com/albertodemichelis/squirrel/issues/220" target="_blank" rel="noopener"
 >a UAF bug and a type confusion bug&lt;/a>.&lt;/p>
 &lt;p>Resources on VScript can be found &lt;a class="link" href="https://developer.valvesoftware.com/wiki/VScript" target="_blank" rel="noopener"
 >here&lt;/a>.&lt;/p>
