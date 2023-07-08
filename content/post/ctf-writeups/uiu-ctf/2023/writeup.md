@@ -102,6 +102,7 @@ Seems like the `ld` cannot find `lib.so` in any of the search paths. I decided t
 with open('ld-linux-x86-64.so.2', 'rb') as f:
     dat = f.read()
 
+# at offset 180311: /usr/lib/x86_64-linux-gnu/
 dat = dat[:180311] + b'/home/user////////////////' + dat[180337:]
 
 with open('ld-linux-x86-64.so.2', 'wb') as f:
@@ -381,9 +382,9 @@ Flag: `uiuctf{is-kernel-being-overly-cautious-5ba2e5c4}`
 ## Virophage
 
 > This challenge is inspired by TSJ CTF 2022's ["virus" challenge](https://github.com/XxTSJxX/TSJ-CTF-2022/tree/main/Pwn/Virus).
-
+>
 > I thought a virus could be even tinier, but I there's a catch: are viruses alive or dead? What separates living organisms from lifeless objects? Can viruses [infect other viruses](https://en.wikipedia.org/wiki/Virophage)?
-
+>
 > **Note: This challenge has not been solved by the author.** [Have fun!](https://xkcd.com/356/)
 
 The challenge's executable (the spawner) is a `setuid` binary, owned by `root` at `/home/user/virophage`.
