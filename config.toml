@@ -3,29 +3,32 @@ languageCode = 'en-us'
 title = 'nyancat0131'
 theme = 'hugo-theme-stack'
 
+[[params.widgets.page]]
+type = 'toc'
+
 [[menu.social]]
-identifier = "facebook"
-name = "Facebook"
-url = "https://www.facebook.com/nyancat0131"
+identifier = 'facebook'
+name = 'Facebook'
+url = 'https://www.facebook.com/nyancat0131'
 weight = -100
 
 [menu.social.params]
-icon = "brand-facebook"
+icon = 'brand-facebook'
 
 [[menu.social]]
-identifier = "twitter"
-name = "Twitter"
-url = "https://twitter.com/bienpnn"
+identifier = 'twitter'
+name = 'Twitter'
+url = 'https://twitter.com/bienpnn'
 weight = -99
 
 [menu.social.params]
-icon = "brand-twitter"
+icon = 'brand-twitter'
 
 [[menu.social]]
-identifier = "github"
-name = "GitHub"
-url = "https://github.com/kungfulon"
+identifier = 'github'
+name = 'GitHub'
+url = 'https://github.com/kungfulon'
 weight = -98
 
 [menu.social.params]
-icon = "brand-github"
+icon = 'brand-github'
