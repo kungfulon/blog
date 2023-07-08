@@ -77,6 +77,7 @@ uiuctf-2023:~$ ./exe
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">with&lt;/span> open(&lt;span style="color:#e6db74">&amp;#39;ld-linux-x86-64.so.2&amp;#39;&lt;/span>, &lt;span style="color:#e6db74">&amp;#39;rb&amp;#39;&lt;/span>) &lt;span style="color:#66d9ef">as&lt;/span> f:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dat &lt;span style="color:#f92672">=&lt;/span> f&lt;span style="color:#f92672">.&lt;/span>read()
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># at offset 180311: /usr/lib/x86_64-linux-gnu/&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>dat &lt;span style="color:#f92672">=&lt;/span> dat[:&lt;span style="color:#ae81ff">180311&lt;/span>] &lt;span style="color:#f92672">+&lt;/span> &lt;span style="color:#e6db74">b&lt;/span>&lt;span style="color:#e6db74">&amp;#39;/home/user////////////////&amp;#39;&lt;/span> &lt;span style="color:#f92672">+&lt;/span> dat[&lt;span style="color:#ae81ff">180337&lt;/span>:]
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">with&lt;/span> open(&lt;span style="color:#e6db74">&amp;#39;ld-linux-x86-64.so.2&amp;#39;&lt;/span>, &lt;span style="color:#e6db74">&amp;#39;wb&amp;#39;&lt;/span>) &lt;span style="color:#66d9ef">as&lt;/span> f:
@@ -330,12 +331,8 @@ By removing this check, the patch allows cross loopback mounting between differe
 &lt;blockquote>
 &lt;p>This challenge is inspired by TSJ CTF 2022&amp;rsquo;s &lt;a class="link" href="https://github.com/XxTSJxX/TSJ-CTF-2022/tree/main/Pwn/Virus" target="_blank" rel="noopener"
 >&amp;ldquo;virus&amp;rdquo; challenge&lt;/a>.&lt;/p>
-&lt;/blockquote>
-&lt;blockquote>
 &lt;p>I thought a virus could be even tinier, but I there&amp;rsquo;s a catch: are viruses alive or dead? What separates living organisms from lifeless objects? Can viruses &lt;a class="link" href="https://en.wikipedia.org/wiki/Virophage" target="_blank" rel="noopener"
 >infect other viruses&lt;/a>?&lt;/p>
-&lt;/blockquote>
-&lt;blockquote>
 &lt;p>&lt;strong>Note: This challenge has not been solved by the author.&lt;/strong> &lt;a class="link" href="https://xkcd.com/356/" target="_blank" rel="noopener"
 >Have fun!&lt;/a>&lt;/p>
 &lt;/blockquote>
