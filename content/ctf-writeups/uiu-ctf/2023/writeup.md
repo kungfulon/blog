@@ -1,11 +1,14 @@
 ---
 title: "UIUCTF 2023 Writeups"
 date: 2023-07-06T00:00:01Z
-draft: true    
+draft: false    
 tags:
   - ctf
   - pwn
 ---
+
+At UIUCTF 2023, I played with [Project Sekai CTF team](https://twitter.com/ProjectSEKAIctf). We achieved 3rd place overall.
+Below is my writeup for some pwn challenges in the CTF.
 
 ## Zapping a Setuid 1
 
@@ -198,7 +201,23 @@ Hint 2:
 
 > The additional patches to this challenge are hints.
 
-In this version `protected_hardlinks` is enable so `user` cannot create hard link of `exe` anymore.
+To understand this challenge, first we need to know about [Linux namespaces](https://man7.org/linux/man-pages/man7/namespaces.7.html).
+For a quick explanation, namespaces are used to create isolated environment.
+Processes inside a namespace can only see and use resources inside that namespace.
+One use of namespaces is to implement containers.
+
+There are multiple kind of namespaces (click on them to see their `man` pages):
+
+- [User namespace](https://man7.org/linux/man-pages/man7/user_namespaces.7.html)
+- [Mount namespace](https://man7.org/linux/man-pages/man7/mount_namespaces.7.html)
+- [Network namespace](https://man7.org/linux/man-pages/man7/network_namespaces.7.html)
+- [PID namespace](https://man7.org/linux/man-pages/man7/pid_namespaces.7.html)
+- [Cgroup namespace](https://man7.org/linux/man-pages/man7/cgroup_namespaces.7.html)
+- [IPC namespace](https://man7.org/linux/man-pages/man7/ipc_namespaces.7.html)
+- [Time namespace](https://man7.org/linux/man-pages/man7/time_namespaces.7.html)
+- [UTS namespace](https://man7.org/linux/man-pages/man7/uts_namespaces.7.html)
+
+In this challenge, `protected_hardlinks` is enable so `user` cannot create hard link of `exe` anymore.
 But the kernel is modified with some patches. Let's analyze them.
 
 ```diff
@@ -239,6 +258,8 @@ index 4f520f800dbc..eb196f016e3f 100644
 
 `check_mnt` is used to check if the path is in the same mount namespace as the current task's mount namespace.
 By removing this check, the patch allows cross loopback mounting between different mount namespaces.
+
+> Mount namespace isolates the mount table. Changes to the mount table inside a namespace will not be visible to other namespaces.
 
 ```diff
 From 9946c9e1e098884064df8a394a6ef992c94d21e6 Mon Sep 17 00:00:00 2001
@@ -574,7 +595,7 @@ Hint:
 
 The first thing that came to my mind was loading a kernel module, but it is disabled.
 Then I remember that `/sbin/modprobe` will be called by the kernel if I execute a file with unknown magic bytes.
-But since kernel module loading is disabled, we cannot use it too. What else?
+But since kernel module loading is disabled, we cannot use it too. What else we can use to make the kernel execute our code?
 
 The kernel will sometimes call user mode helper like `/sbin/modprobe` using `call_usermodehelper_setup` and `call_usermodehelper_exec`.
 `call_usermodehelper` will call both functions.
