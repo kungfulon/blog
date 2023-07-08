@@ -1,24 +1,31 @@
 baseURL = 'https://nyancat0131.moe/'
 languageCode = 'en-us'
 title = 'nyancat0131'
-theme = 'm10c'
+theme = 'hugo-theme-stack'
 
-[params]
-  author = 'nyancat0131'
-  description = 'Security Engineer'
-  avatar = '/avatar.png'
+[[menu.social]]
+identifier = "facebook"
+name = "Facebook"
+url = "https://www.facebook.com/nyancat0131"
+weight = -100
 
-  [[params.social]]
-    icon = "facebook"
-    name = "Facebook"
-    url = "https://www.facebook.com/nyancat0131"
+[menu.social.params]
+icon = "brand-facebook"
 
-  [[params.social]]
-    icon = "twitter"
-    name = "Twitter"
-    url = "https://twitter.com/bienpnn"
+[[menu.social]]
+identifier = "twitter"
+name = "Twitter"
+url = "https://twitter.com/bienpnn"
+weight = -99
 
-  [[params.social]]
-    icon = "github"
-    name = "Github"
-    url = "https://github.com/kungfulon"
+[menu.social.params]
+icon = "brand-twitter"
+
+[[menu.social]]
+identifier = "github"
+name = "GitHub"
+url = "https://github.com/kungfulon"
+weight = -98
+
+[menu.social.params]
+icon = "brand-github"
